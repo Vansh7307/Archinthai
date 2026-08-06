@@ -2996,6 +2996,26 @@ function boot() {
   setStatus('Studio ready.');
 }
 
+// Expose a stable API for the enterprise analysis modules (analysis-ui.js).
+window.ArchinthaiStudio = {
+  getDesign: () => state ? state.design : null,
+  getState: () => state,
+  applyProgram: (levels, result) => {
+    // Rebuild the level editor from an AI-parsed program, then queue autosave.
+    buildEditableLevels(levels);
+    if (result && result.floorCount) {
+      el('floorCount').value = String(Math.max(1, Math.min(4, result.floorCount)));
+    }
+    if (result && typeof result.hasBasement === 'boolean') {
+      el('includeBasement').checked = result.hasBasement;
+    }
+    queueAutosave();
+  },
+  renderAll: () => {
+    if (state && state.design) renderDesign();
+  },
+};
+
 boot();
 
 window.addEventListener("load", () => {

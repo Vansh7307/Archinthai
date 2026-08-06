@@ -26,8 +26,15 @@
   <script src="/static/js/defaults.js" defer></script>
   <script src="/static/js/templates.js" defer></script>
   <script src="/static/js/engine.js" defer></script>
-  <script src="/static/js/furniture.js" defer></script>
+<script src="/static/js/furniture.js" defer></script>
   <script src="/static/js/supabase.js" defer></script>
+  <script src="/static/js/compliance.js" defer></script>
+  <script src="/static/js/cost.js" defer></script>
+  <script src="/static/js/sustainability.js" defer></script>
+  <script src="/static/js/ai.js" defer></script>
+  <script src="/static/js/dxf.js" defer></script>
+  <script src="/static/js/pdf.js" defer></script>
+  <script src="/static/js/analysis-ui.js" defer></script>
   <script src="/static/js/app.js" defer></script>
 </head>
 <body>
@@ -180,8 +187,22 @@
             <button class="chip">add balcony on first floor</button>
             <button class="chip">make living room larger on ground floor</button>
             <button class="chip">move study to first floor</button>
-            <button class="chip">add gym in basement</button>
+<button class="chip">add gym in basement</button>
             <button class="chip">remove storage from basement</button>
+          </div>
+        </section>
+
+        <section class="block">
+          <div class="block-head">
+            <div>
+              <h2>AI Brief</h2>
+              <p>Describe your dream home and let AI set up the room program.</p>
+            </div>
+          </div>
+          <textarea id="aiBriefInput" rows="3" placeholder="e.g. 3 bedroom modern villa with a home office, basement parking, roof terrace and a small gym..."></textarea>
+          <div class="command-row">
+            <button id="aiBriefBtn" class="btn btn-ghost small-btn">Parse Brief</button>
+            <button id="aiSettingsBtn" class="btn btn-ghost small-btn">AI Settings</button>
           </div>
         </section>
 
@@ -225,8 +246,10 @@
                 <button id="exportPngBtn" class="btn btn-ghost small-btn">Export Plan PNG</button>
                 <button id="exportSvgBtn" class="btn btn-ghost small-btn">Export Plan SVG</button>
                 <button id="exportJsonBtn" class="btn btn-ghost small-btn">Export Project JSON</button>
-                <label class="import-btn btn btn-ghost small-btn">Import JSON<input id="importJsonInput" type="file" accept="application/json" hidden /></label>
+<label class="import-btn btn btn-ghost small-btn">Import JSON<input id="importJsonInput" type="file" accept="application/json" hidden /></label>
                 <button id="exportReportBtn" class="btn btn-ghost small-btn">Export HTML Report</button>
+                <button id="exportPdfBtn" class="btn btn-ghost small-btn">Export PDF</button>
+                <button id="exportDxfBtn" class="btn btn-ghost small-btn">Export DXF</button>
               </div>
               <div id="notes" class="notes"></div>
             </div>
@@ -286,7 +309,24 @@
                   <p>Generate and compare alternative planning strategies.</p>
                 </div>
               </div>
-              <div id="candidateList" class="candidate-list"></div>
+<div id="candidateList" class="candidate-list"></div>
+            </div>
+
+            <div class="panel section-card">
+              <div class="card-head compact-head">
+                <div>
+                  <h2>AI Architect Analysis</h2>
+                  <p>Compliance, cost, sustainability, and AI critique of the current design.</p>
+                </div>
+                <div class="mini-actions">
+                  <button id="runAnalysisBtn" class="btn btn-primary small-btn">Run Analysis</button>
+                  <button id="aiCritiqueBtn" class="btn btn-ghost small-btn">AI Critique</button>
+                  <button id="aiRationaleBtn" class="btn btn-ghost small-btn">Rationale</button>
+                </div>
+              </div>
+              <div id="analysisPanel" class="analysis-panel">
+                <div class="analysis-empty">Enter your AI API key in <strong>AI Settings</strong> to enable live AI critique & rationale. Compliance, cost, and sustainability run fully offline.</div>
+              </div>
             </div>
           </div>
         </section>

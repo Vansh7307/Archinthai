@@ -1,36 +1,49 @@
-# ArchinthAI — Cloud + Furniture + Smooth + Deploy
+# ArchinthAI — Enterprise-Grade AI Architect Platform
 
-## Task list
+## 🎯 Vision
+Position ArchinthAI as **"The AI Architect Platform"** — automating the full architectural
+workflow (program → design → code compliance → cost → construction docs) that is traditionally
+done by human architects. Build to a level that impresses top global tech companies.
 
-### 1. Client-side engine (port Python → JS)
-- [ ] Port `generation.py` → `static/js/engine.js`
-- [ ] Port `defaults.py` → `static/js/defaults.js`
-- [ ] Port `templates_data.py` → `static/js/templates.js`
-- [ ] Update `app.js` to use local JS engine (no `/api/*`)
+## ✅ Completed (baseline)
+- [x] Client-side engine (`engine.js`) — generation runs in browser, no backend needed
+- [x] Client-side defaults + templates
+- [x] Furniture placement (2D + 3D)
+- [x] Supabase cloud persistence config + localStorage fallback
+- [x] Static deployment configs (Vercel / Netlify / Render)
+- [x] Git repo initialized, committed, pushed to GitHub
 
-### 2. Furniture placement feature
-- [ ] Create furniture library data (`static/js/furniture.js`)
-- [ ] Add furniture palette panel in HTML/CSS
-- [ ] Click-to-place furniture on 2D plan
-- [ ] Drag/move/remove furniture
-- [ ] Render furniture in 3D model
-- [ ] Save furniture in project state
+## 🚀 Phase 1 — Professional "Architect Replacement" Engines
+- [ ] `compliance.js` — building code compliance engine (setbacks, egress, min room sizes, stair rules, ventilation, bathroom ratios)
+- [ ] `cost.js` — construction cost estimation engine (by area, materials, finishes, location factor)
+- [ ] `sustainability.js` — energy / orientation / daylight scoring
+- [ ] Auto-fix engine that resolves compliance violations
+- [ ] Integrate compliance + cost + sustainability into design metadata & UI
 
-### 3. Performance smoothing
-- [ ] Lazy-load Three.js
-- [ ] Debounce/throttle expensive renders
-- [ ] rAF batching for drag
-- [ ] 3D mesh reuse / reduce garbage
+## 🧠 Phase 2 — Real AI Engine
+- [ ] `ai.js` — pluggable LLM integration (OpenAI / Anthropic / Gemini), configurable API key
+- [ ] Natural language → structured room program understanding
+- [ ] Design rationale generation (why this layout for this brief)
+- [ ] Architect critique engine (reviews design, suggests improvements)
+- [ ] Smart refinement via LLM (beyond rule-based matching)
 
-### 4. Supabase integration
-- [ ] Add Supabase client + config
-- [ ] Save/Load projects to Supabase table
-- [ ] Furniture library from Supabase
+## 📤 Phase 3 — Professional Export (BIM / industry standard)
+- [ ] DXF export (AutoCAD-compatible) for floor plans
+- [ ] PDF report generation (client-side)
+- [ ] Professional title-block sheets for plans/elevations
+- [ ] Enhanced SVG/PNG exports
 
-### 5. Vercel deployment
-- [ ] Add `vercel.json`
-- [ ] Env config template (`.env.example`)
+## 🧪 Phase 4 — Engineering Excellence
+- [x] Automated test suite (`tests/`) — Node unit tests for engine, compliance, cost
+  - [x] `tests/compliance.test.js` — 8 tests (setbacks, room sizes, stairs, overlaps, ratios, score)
+  - [x] `tests/cost.test.js` — 6 tests (built area, cost ranges, class/region factors, contingency)
+  - [x] `tests/sustainability.test.js` — 5 tests (score, grade, roof, glazing, findings)
+  - [x] `package.json` with `npm test` running via Node's built-in test runner
+- [x] Modular refactor of `app.js` into clear modules
+- [ ] GitHub Actions CI (lint, test, build, deploy)
+- [ ] Comprehensive README (architecture diagram, API docs, vision)
 
-### 6. Git commit & push
-- [ ] `git init`, add, commit
-- [ ] Push to `https://github.com/Vansh7307/Archinthai.git`
+## 🎨 Phase 5 — Polish & Positioning
+- [ ] SEO meta, favicon, 404 page
+- [ ] "Disrupting the architect industry" positioning content (creator page / landing)
+- [ ] Final commit + push to GitHub
