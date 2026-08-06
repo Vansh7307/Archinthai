@@ -1,0 +1,12 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "version": 2,
+  "framework": null,
+  "buildCommand": "",
+  "outputDirectory": ".",
+  "rewrites": [
+    { "source": "/creator", "destination": "/creator.html" },
+    { "source": "/", "destination": "/index.html" }
+  ],
+  "cleanUrls": true
+}

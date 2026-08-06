@@ -1,0 +1,70 @@
+"""Default project configuration for ArchinthAI."""
+
+DEFAULT_CONFIG = {
+    "project_name": "ArchinthAI Project",
+    "plot_width": 20.0,
+    "plot_depth": 16.0,
+    "style": "Modern",
+    "include_basement": True,
+    "floor_count": 2,
+    "include_roof": True,
+    "facade_theme": "Glass + Concrete",
+    "road_side": "south",
+    "north_direction": "up",
+    "setback_front": 0.0,
+    "setback_rear": 0.0,
+    "setback_left": 0.0,
+    "setback_right": 0.0,
+    "levels": [
+        {
+            "level_id": "basement",
+            "label": "Basement",
+            "level_type": "basement",
+            "enabled": True,
+            "room_requests": [
+                {"room_type": "Parking", "count": 1, "custom": False, "preferred_zone": None},
+                {"room_type": "Storage", "count": 1, "custom": False, "preferred_zone": None},
+                {"room_type": "Laundry", "count": 1, "custom": False, "preferred_zone": None},
+                {"room_type": "Gym", "count": 1, "custom": False, "preferred_zone": None},
+            ],
+        },
+        {
+            "level_id": "ground",
+            "label": "Ground Floor",
+            "level_type": "ground",
+            "enabled": True,
+            "room_requests": [
+                {"room_type": "Living Room", "count": 1, "custom": False, "preferred_zone": None},
+                {"room_type": "Dining Room", "count": 1, "custom": False, "preferred_zone": None},
+                {"room_type": "Kitchen", "count": 1, "custom": False, "preferred_zone": None},
+                {"room_type": "Study", "count": 1, "custom": False, "preferred_zone": None},
+                {"room_type": "Bathroom", "count": 1, "custom": False, "preferred_zone": None},
+                {"room_type": "Stair", "count": 1, "custom": False, "preferred_zone": None},
+            ],
+        },
+        {
+            "level_id": "first_floor",
+            "label": "First Floor",
+            "level_type": "floor",
+            "enabled": True,
+            "room_requests": [
+                {"room_type": "Master Bedroom", "count": 1, "custom": False, "preferred_zone": None},
+                {"room_type": "Bedroom", "count": 2, "custom": False, "preferred_zone": None},
+                {"room_type": "Attached Bathroom", "count": 2, "custom": False, "preferred_zone": None},
+                {"room_type": "Balcony", "count": 1, "custom": False, "preferred_zone": None},
+                {"room_type": "Family Lounge", "count": 1, "custom": False, "preferred_zone": None},
+            ],
+        },
+        {
+            "level_id": "roof",
+            "label": "Roof",
+            "level_type": "roof",
+            "enabled": True,
+            "room_requests": [
+                {"room_type": "Solar Panels", "count": 1, "custom": False, "preferred_zone": None},
+                {"room_type": "Water Tank", "count": 1, "custom": False, "preferred_zone": None},
+                {"room_type": "Sit-out Area", "count": 1, "custom": False, "preferred_zone": None},
+            ],
+        },
+    ],
+}

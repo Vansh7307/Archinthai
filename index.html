@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ArchinthAI</title>
+  <link rel="icon" type="image/png" href="/static/img/archinthai-logo.png" />
+<link rel="stylesheet" href="/static/css/styles.css" />
+<script>
+    // ============================================================
+    // SUPABASE PROJECT CONFIG
+    // -----------------------------------------------
+    // The previous Supabase project hit its free-tier limit.
+    // To deploy on a NEW Supabase project:
+    //   1) Create a new project at https://supabase.com
+    //   2) Open Project Settings > API
+    //   3) Copy the "Project URL" and publishable "anon" key
+    //   4) Paste them below between the quotes.
+    // Steps are also documented in the README.
+    // ============================================================
+    window.ARCHINTHAI_SUPABASE = {
+      url: "",      // e.g. "https://your-project-id.supabase.co"
+      anonKey: ""   // e.g. "eyJhbGciOiJI..."
+    };
+  </script>
+  <script src="/static/js/defaults.js" defer></script>
+  <script src="/static/js/templates.js" defer></script>
+  <script src="/static/js/engine.js" defer></script>
+  <script src="/static/js/furniture.js" defer></script>
+  <script src="/static/js/supabase.js" defer></script>
+  <script src="/static/js/app.js" defer></script>
+</head>
+<body>
+  <div id="startupSplash" class="startup-splash">
+  <div class="startup-splash-inner">
+    <img src="/static/img/archinthai-logo.png" alt="ArchinthAI Logo" class="startup-logo">
+    <h1 class="startup-title">ArchinthAI</h1>
+    <p class="startup-tagline">AI Assisted Architectural Planning Studio</p>
+  </div>
+  </div>
+  <div class="bg-orb orb-1"></div>
+  <div class="bg-orb orb-2"></div>
+  <div class="app-shell">
+    <header class="hero panel fade-up">
+      <div class="hero-copy">
+        <div class="badge"><img src="/static/img/archinthai-logo.png" alt="ArchinthAI Logo" class="badge-logo" /> <span>ArchinthAI Studio Pro</span></div>
+        <h1>AI assisted multi floor house planning studio</h1>
+        <p>Create level wise room programs, generate candidate plans, inspect a polished 2D/3D concept model, and iteratively refine the building with natural language commands.</p>
+      </div>
+      <div class="hero-toolbar">
+        <button id="generateBtn" class="btn btn-primary">Generate Design</button>
+        <button id="saveProjectBtn" class="btn btn-secondary">Save</button>
+        <button id="loadProjectBtn" class="btn btn-ghost">Load</button>
+        <button id="undoBtn" class="btn btn-ghost">Undo</button>
+        <button id="redoBtn" class="btn btn-ghost">Redo</button>
+        <button id="optimizeDesignBtn" class="btn btn-ghost">Optimize</button>
+        <a href="/creator" class="btn btn-ghost link-btn">Creator</a>
+      </div>
+    </header>
+
+    <div class="layout-grid">
+      <aside class="sidebar panel fade-up delay-1">
+        <section class="block">
+          <div class="block-head">
+            <div>
+              <h2>Presets</h2>
+              <p>Start quickly with curated multi floor layouts.</p>
+            </div>
+          </div>
+          <div id="templateCards" class="template-grid"></div>
+        </section>
+
+        <section class="block">
+          <div class="block-head">
+            <div>
+              <h2>Project setup</h2>
+              <p>Configure the building envelope and level stack.</p>
+            </div>
+          </div>
+          <div class="form-grid two-col">
+            <label>Project Name<input id="projectName" type="text" value="Untitled" /></label>
+            <label>Style
+              <select id="style">
+                <option>Modern</option>
+                <option>Minimal</option>
+                <option>Contemporary</option>
+                <option>Luxury</option>
+              </select>
+            </label>
+            <label>Plot Width (m)<input id="plotWidth" type="number" min="8" max="60" value="20" /></label>
+            <label>Plot Depth (m)<input id="plotDepth" type="number" min="8" max="60" value="16" /></label>
+            <label>Road Side
+              <select id="roadSide">
+                <option value="south" selected>South</option>
+                <option value="north">North</option>
+                <option value="east">East</option>
+                <option value="west">West</option>
+              </select>
+            </label>
+            <label>North Arrow
+              <select id="northDirection">
+                <option value="up" selected>Up</option>
+                <option value="right">Right</option>
+                <option value="down">Down</option>
+                <option value="left">Left</option>
+              </select>
+            </label>
+            <label>Facade Theme
+              <select id="facadeTheme">
+                <option>Glass + Concrete</option>
+                <option>Warm Minimal</option>
+                <option>Stone + Glass</option>
+                <option>Wood + White</option>
+              </select>
+            </label>
+            <label>Upper Floors
+              <select id="floorCount">
+                <option value="1">1</option>
+                <option value="2" selected>2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+              </select>
+            </label>
+          </div>
+          <div class="form-grid four-col">
+            <label>Front Setback (m)<input id="setbackFront" type="number" min="0" max="12" step="0.1" value="1.5" /></label>
+            <label>Rear Setback (m)<input id="setbackRear" type="number" min="0" max="12" step="0.1" value="1.2" /></label>
+            <label>Left Setback (m)<input id="setbackLeft" type="number" min="0" max="12" step="0.1" value="0.9" /></label>
+            <label>Right Setback (m)<input id="setbackRight" type="number" min="0" max="12" step="0.1" value="0.9" /></label>
+          </div>
+          <div class="toggle-row">
+            <label class="toggle"><input id="includeBasement" type="checkbox" /><span>Include basement</span></label>
+            <label class="toggle"><input id="includeRoof" type="checkbox" checked /><span>Include roof</span></label>
+          </div>
+        </section>
+
+        <section class="block">
+          <div class="block-head">
+            <div>
+              <h2>Level wise room program</h2>
+              <p>Assign rooms floor by floor. You can add custom room types too.</p>
+            </div>
+            <div class="mini-actions">
+              <select id="quickRoomSelect">
+                <option value="">Quick Add Room</option>
+                <option>Living Room</option>
+                <option>Dining Room</option>
+                <option>Kitchen</option>
+                <option>Bedroom</option>
+                <option>Master Bedroom</option>
+                <option>Bathroom</option>
+                <option>Attached Bathroom</option>
+                <option>Study</option>
+                <option>Office</option>
+                <option>Parking</option>
+                <option>Gym</option>
+                <option>Storage</option>
+                <option>Balcony</option>
+                <option>Stair</option>
+                <option>Terrace Garden</option>
+              </select>
+              <button id="resetConfigBtn" class="btn btn-ghost small-btn">Reset</button>
+            </div>
+          </div>
+          <div id="levelsContainer" class="level-stack"></div>
+        </section>
+
+        <section class="block">
+          <div class="block-head">
+            <div>
+              <h2>AI refinement</h2>
+              <p>Modify the generated design using room level commands.</p>
+            </div>
+          </div>
+          <div class="command-row">
+            <input id="commandInput" type="text" placeholder="make kitchen larger on ground floor" />
+            <button id="applyCommandBtn" class="btn btn-primary small-btn">Apply</button>
+          </div>
+<div class="chip-wrap">
+            <button class="chip">add balcony on first floor</button>
+            <button class="chip">make living room larger on ground floor</button>
+            <button class="chip">move study to first floor</button>
+            <button class="chip">add gym in basement</button>
+            <button class="chip">remove storage from basement</button>
+          </div>
+        </section>
+
+        <section class="block">
+          <div class="block-head">
+            <div>
+              <h2>Furniture</h2>
+              <p>Pick a piece and click a room on the plan to place it.</p>
+            </div>
+            <div class="mini-actions">
+              <button id="clearFurnitureBtn" class="btn btn-ghost small-btn">Clear</button>
+            </div>
+          </div>
+          <div class="furniture-cats" id="furnitureCats"></div>
+          <div id="furniturePalette" class="furniture-palette"></div>
+          <div class="furniture-hint">🖱️ Select furniture → click a room on the 2D plan to place. Drag to move, right-click to remove.</div>
+        </section>
+      </aside>
+
+      <main class="main-stage fade-up delay-2">
+        <section class="stats-grid">
+          <div class="stat panel"><span>Score</span><strong id="scoreValue">--</strong></div>
+          <div class="stat panel"><span>Strategy</span><strong id="strategyValue">--</strong></div>
+          <div class="stat panel"><span>Levels</span><strong id="levelCountValue">--</strong></div>
+          <div class="stat panel"><span>Status</span><strong id="statusText">Ready</strong></div>
+        </section>
+
+        <section class="main-grid">
+          <div class="plan-column">
+            <div class="panel section-card">
+              <div class="card-head">
+                <div>
+                  <h2>2D floor plans</h2>
+                  <p>Inspect room zoning and switch between levels.</p>
+                </div>
+                <div id="floorTabs" class="tabs"></div>
+              </div>
+              <canvas id="planCanvas" width="1280" height="720"></canvas>
+              <div class="actions-line">
+                <button id="reflowLevelBtn" class="btn btn-ghost small-btn">Reflow Active Level</button>
+                <button id="exportPngBtn" class="btn btn-ghost small-btn">Export Plan PNG</button>
+                <button id="exportSvgBtn" class="btn btn-ghost small-btn">Export Plan SVG</button>
+                <button id="exportJsonBtn" class="btn btn-ghost small-btn">Export Project JSON</button>
+                <label class="import-btn btn btn-ghost small-btn">Import JSON<input id="importJsonInput" type="file" accept="application/json" hidden /></label>
+                <button id="exportReportBtn" class="btn btn-ghost small-btn">Export HTML Report</button>
+              </div>
+              <div id="notes" class="notes"></div>
+            </div>
+
+            <div class="panel section-card">
+              <div class="card-head">
+                <div>
+                  <h2>Elevation preview</h2>
+                  <p>Front, rear, left, and right conceptual elevation sheets.</p>
+                </div>
+                <div id="elevationTabs" class="tabs"></div>
+              </div>
+              <canvas id="elevationCanvas" width="1280" height="420"></canvas>
+              <div class="actions-line">
+                <button id="exportElevationBtn" class="btn btn-ghost small-btn">Export Elevation PNG</button>
+              </div>
+            </div>
+
+            <div class="panel section-card">
+              <div class="card-head compact-head">
+                <div>
+                  <h2>Room inventory</h2>
+                  <p>Area summary for the active level.</p>
+                </div>
+                <div class="inventory-head-tools">
+                  <input id="roomFilterInput" class="mini-search" type="text" placeholder="Filter rooms" />
+                  <div id="summaryBadge" class="summary-badge">0 rooms</div>
+                </div>
+              </div>
+              <div id="inventoryTable" class="inventory-table"></div>
+            </div>
+          </div>
+
+          <div class="viewer-column">
+            <div class="panel section-card viewer-card">
+              <div class="card-head">
+                <div>
+                  <h2>3D conceptual model</h2>
+                  <p>Animated, orbit controlled massing with shell, floors, windows, and room volumes.</p>
+                </div>
+                <div class="viewer-tools">
+                  <button id="explodeBtn" class="btn btn-ghost small-btn">Exploded View</button>
+                  <button id="toggleShellBtn" class="btn btn-ghost small-btn">Shell</button>
+                  <button id="cutawayBtn" class="btn btn-ghost small-btn">Cutaway</button>
+                  <button id="isolateLevelBtn" class="btn btn-ghost small-btn">Isolate Floor</button>
+                  <button id="resetCameraBtn" class="btn btn-ghost small-btn">Reset Camera</button>
+                  <button id="export3dBtn" class="btn btn-ghost small-btn">Export 3D Snapshot</button>
+                </div>
+              </div>
+              <div id="threeContainer"></div>
+            </div>
+
+            <div class="panel section-card">
+              <div class="card-head compact-head">
+                <div>
+                  <h2>Candidate comparison</h2>
+                  <p>Generate and compare alternative planning strategies.</p>
+                </div>
+              </div>
+              <div id="candidateList" class="candidate-list"></div>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+  <div id="autosaveBadge" class="autosave-badge">Auto-save idle</div>
+
+  <template id="levelTemplate">
+    <div class="level-card">
+      <div class="level-head">
+        <div>
+          <h3 class="level-title"></h3>
+          <div class="level-type"></div>
+        </div>
+        <div class="level-actions">
+          <button class="btn btn-ghost small-btn quick-add-btn">Quick Add</button>
+          <button class="btn btn-ghost small-btn add-room-btn">Add Room</button>
+        </div>
+      </div>
+      <div class="rooms-list"></div>
+    </div>
+  </template>
+
+  <template id="roomTemplate">
+    <div class="room-row">
+      <input class="room-name" type="text" placeholder="Room name" />
+      <input class="room-count" type="number" min="1" value="1" />
+      <select class="room-zone">
+        <option value="">Auto zone</option>
+        <option value="front">Front</option>
+        <option value="middle">Middle</option>
+        <option value="rear">Rear</option>
+      </select>
+      <button class="btn btn-ghost small-btn remove-room-btn">×</button>
+    </div>
+  </template>
+
+</body>
+</html>
+
+

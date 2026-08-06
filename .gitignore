@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+
+# Node
+node_modules/
+dist/
+
+# Temporary/helper scripts (not part of the app)
+backend/replace_brand.py
+backend/replace_html.py
+backend/make_creator.py
+backend/test_api.py
+backend/test_server.py
+backend/verify_app.py
+site.html
+assets*.css
+assets*.js
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
