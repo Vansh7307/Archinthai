@@ -6,6 +6,7 @@ import PasswordStrengthMeter from "./PasswordStrengthMeter.jsx";
 import { COUNTRIES } from "../data/countries.js";
 import { useToast } from "../context/ToastContext.jsx";
 import { authService } from "../services/firebase.js";
+import { isDemoMode } from "../config.js";
 
 /**
  * Sign up tab.
@@ -67,7 +68,7 @@ export default function SignupForm() {
         email: form.email.trim(),
         password: form.password
       });
-      toast.success("Account created successfully!");
+toast.success(isDemoMode ? "Account created successfully! (demo)" : "Account created successfully!");
       setForm({ fullName: "", username: "", email: "", phone: "", password: "", confirmPassword: "" });
     } catch {
       toast.error("Sign up failed. Please try again.");

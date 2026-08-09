@@ -4,6 +4,7 @@ import { useToast } from "../context/ToastContext.jsx";
 import { authService } from "../services/firebase.js";
 import { sendPhoneOtp } from "../services/msg91.js";
 import { sendResetEmail, sendOtpEmail } from "../services/emailjs.js";
+import { isDemoMode } from "../config.js";
 
 const RESEND_COOLDOWN = 30; // seconds
 
@@ -56,7 +57,7 @@ export default function ForgotPassword({ onBack }) {
       return;
     }
 
-    setError("");
+setError("");
     setLoading(true);
     try {
       if (method === "email") {
@@ -65,10 +66,10 @@ export default function ForgotPassword({ onBack }) {
         await sendResetEmail(target.trim(), resetLink);
         // Also send a custom OTP email fallback
         await sendOtpEmail(target.trim(), "123456");
-        toast.success("Reset link & OTP sent to your email.");
+        toast.success(isDemoMode ? "Reset link & OTP sent to your email (demo)." : "Reset link & OTP sent to your email.");
       } else {
         await sendPhoneOtp(target.trim(), countryCode);
-        toast.success("Password reset OTP sent to your phone.");
+        toast.success(isDemoMode ? "Password reset OTP sent to your phone (demo)." : "Password reset OTP sent to your phone.");
       }
       setSent(true);
       startCountdown();

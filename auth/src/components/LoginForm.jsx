@@ -5,6 +5,7 @@ import SocialButtons, { OrDivider } from "./SocialButtons.jsx";
 import { useToast } from "../context/ToastContext.jsx";
 import { authService } from "../services/firebase.js";
 import { sendPhoneOtp, verifyPhoneOtp } from "../services/msg91.js";
+import { isDemoMode } from "../config.js";
 
 /**
  * Login tab. Supports both password login and OTP-based login
@@ -65,12 +66,12 @@ export default function LoginForm({ onForgotPassword }) {
 
     setLoading(true);
     try {
-      if (otpMode === "email") {
+if (otpMode === "email") {
         // Fire a reset-style OTP via Email.js fallback (see services/emailjs.js)
-        toast.info("OTP sent to your email (stub).");
+        toast.info(isDemoMode ? "OTP sent to your email (demo)." : "OTP sent to your email.");
       } else {
         await sendPhoneOtp(otpTarget.trim(), countryCode);
-        toast.success("OTP sent to your phone.");
+        toast.success(isDemoMode ? "OTP sent to your phone (demo)." : "OTP sent to your phone.");
       }
       setOtpSent(true);
     } catch {

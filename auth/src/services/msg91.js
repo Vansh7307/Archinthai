@@ -1,18 +1,33 @@
 // ============================================================
 // MSG91 PHONE OTP SERVICE
 // ------------------------------------------------------------
-// Placeholder integration for MSG91 OTP flow.
+// Safe wrapper around the MSG91 OTP REST API. Reads keys from
+// the environment via config.js. If MSG91 is not configured,
+// all calls fall back to an internal Mock/Demo Mode so the UI
+// never crashes with a white screen.
+//
 // Docs: https://control.msg91.com/api/v5/otp
-// To enable: set your auth key + template id below.
+// To enable: set VITE_MSG91_* env vars (see config.js notes).
 // ============================================================
 
-const MSG91_CONFIG = {
-  authKey: "YOUR_MSG91_AUTH_KEY",
-  templateId: "YOUR_OTP_TEMPLATE_ID",
-  senderId: "YOUR_SENDER_ID"
-};
+import { isMsg91Configured, msg91 } from "../config.js";
 
 const API_BASE = "https://control.msg91.com/api/v5/otp";
+
+// The MSG91 Client is not installed by default. Import it only if
+// you install it, e.g.:
+//   import Msg91 from "msg91";
+// const client = new Msg91(msg91.authKey.value, msg91.senderId.value);
+
+const msg91Ready = (() => {
+  try {
+    return isMsg91Configured();
+  } catch {
+    return false;
+  }
+})();
+
+const delay = (ms = 800) => new Promise((r) => setTimeout(r, ms));
 
 /**
  * Send an OTP to a phone number (with country code).
@@ -20,16 +35,19 @@ const API_BASE = "https://control.msg91.com/api/v5/otp";
  * @param {string} countryCode - e.g. "+91"
  */
 export async function sendPhoneOtp(phone, countryCode) {
-  // const res = await fetch(
-  //   `${API_BASE}?template_id=${MSG91_CONFIG.templateId}&mobile=${encodeURIComponent(
-  //     countryCode + phone
-  //   )}&authkey=${MSG91_CONFIG.authKey}&sender=${MSG91_CONFIG.senderId}`,
-  //   { method: "POST" }
-  // );
-  // const data = await res.json();
-  // return data;
-  console.log("[MSG91] sendPhoneOtp (stub)", { phone, countryCode });
-  return { type: "success", message: "OTP sent (stub)" };
+  if (msg91Ready) {
+    // const res = await fetch(
+    //   `${API_BASE}?template_id=${msg91.templateId.value}&mobile=${encodeURIComponent(
+    //     countryCode + phone
+    //   )}&authkey=${msg91.authKey.value}&sender=${msg91.senderId.value}`,
+    //   { method: "POST" }
+    // );
+    // const data = await res.json();
+    // return data;
+  }
+  await delay();
+  console.log("[MSG91][Demo] sendPhoneOtp", { phone, countryCode });
+  return { type: "success", message: "OTP sent (demo)", demo: true };
 }
 
 /**
@@ -39,12 +57,15 @@ export async function sendPhoneOtp(phone, countryCode) {
  * @param {string} otp
  */
 export async function verifyPhoneOtp(phone, countryCode, otp) {
-  // const res = await fetch(
-  //   `${API_BASE}/verify?otp=${otp}&mobile=${encodeURIComponent(countryCode + phone)}&authkey=${MSG91_CONFIG.authKey}`,
-  //   { method: "POST" }
-  // );
-  // const data = await res.json();
-  // return data;
-  console.log("[MSG91] verifyPhoneOtp (stub)", { phone, countryCode, otp });
-  return { type: "success", message: "OTP verified (stub)" };
+  if (msg91Ready) {
+    // const res = await fetch(
+    //   `${API_BASE}/verify?otp=${otp}&mobile=${encodeURIComponent(countryCode + phone)}&authkey=${msg91.authKey.value}`,
+    //   { method: "POST" }
+    // );
+    // const data = await res.json();
+    // return data;
+  }
+  await delay();
+  console.log("[MSG91][Demo] verifyPhoneOtp", { phone, countryCode, otp });
+  return { type: "success", message: "OTP verified (demo)", demo: true };
 }

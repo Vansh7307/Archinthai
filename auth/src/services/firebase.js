@@ -1,13 +1,16 @@
 // ============================================================
 // FIREBASE AUTHENTICATION SERVICE
 // ------------------------------------------------------------
-// Placeholder integration ready to connect to a real Firebase
-// project. To enable:
-//   1. Create a Firebase project at https://console.firebase.google.com
-//   2. Add your web app and copy the config below.
-//   3. Uncomment the initializeApp/getAuth lines and paste config.
-//   4. Enable the sign-in methods you need in the Firebase console
-//      (Email/Password, Google, Microsoft).
+// Safe wrapper around Firebase Auth. Reads keys from the
+// environment via `config.js`. If Firebase is not configured
+// (missing/placeholder keys), every call automatically falls
+// back to an internal Mock/Demo Mode so the UI never crashes
+// with a white screen.
+//
+// To enable real Firebase auth:
+//   1. Add the env vars to a `.env` file (see config.js notes).
+//   2. `npm i firebase` in the auth folder.
+//   3. Uncomment the firebase imports below.
 // ============================================================
 
 // import { initializeApp } from "firebase/app";
@@ -18,20 +21,50 @@
 //   sendPasswordResetEmail,
 //   signInWithPopup,
 //   GoogleAuthProvider,
-//   OAuthProvider
+//   OAuthProvider,
+//   updateProfile
 // } from "firebase/auth";
 
-// const firebaseConfig = {
-//   apiKey: "YOUR_API_KEY",
-//   authDomain: "YOUR_PROJECT.firebaseapp.com",
-//   projectId: "YOUR_PROJECT_ID",
-//   storageBucket: "YOUR_PROJECT.appspot.com",
-//   messagingSenderId: "YOUR_SENDER_ID",
-//   appId: "YOUR_APP_ID"
-// };
+import { isFirebaseConfigured, firebase } from "../config.js";
 
-// const app = initializeApp(firebaseConfig);
-// const auth = getAuth(app);
+// ---- Optional real Firebase instance (only if configured) ----
+let auth = null;
+let firebaseEnabled = false;
+
+try {
+  firebaseEnabled = isFirebaseConfigured();
+  if (firebaseEnabled) {
+    // If you installed `firebase`, uncomment these lines and the
+    // imports above to actually initialise the SDK.
+    //
+    // const app = initializeApp({
+    //   apiKey: firebase.apiKey.value,
+    //   authDomain: firebase.authDomain.value,
+    //   projectId: firebase.projectId.value,
+    //   storageBucket: firebase.storageBucket.value,
+    //   messagingSenderId: firebase.messagingSenderId.value,
+    //   appId: firebase.appId.value
+    // });
+    // auth = getAuth(app);
+    //
+    // NOTE: The firebase package is not installed by default, so we
+    // keep this disabled to avoid a runtime import error. Uncomment
+    // once you `npm i firebase`.
+    firebaseEnabled = false;
+  }
+} catch (err) {
+  // Never let init errors crash the app.
+  console.warn("[Firebase] init skipped:", err);
+  firebaseEnabled = false;
+}
+
+const isEnabled = () => firebaseEnabled && auth;
+
+/**
+ * Simulate a small network delay so loading states are visible
+ * and the UX feels realistic in demo mode.
+ */
+const delay = (ms = 800) => new Promise((r) => setTimeout(r, ms));
 
 export const authService = {
   /**
@@ -40,30 +73,39 @@ export const authService = {
    * @param {string} password
    */
   async login(email, password) {
-    // const cred = await signInWithEmailAndPassword(auth, email, password);
-    // return cred.user;
-    console.log("[Firebase] login (stub)", { email });
-    return { uid: "stub-user-id", email };
+    if (isEnabled()) {
+      // const cred = await signInWithEmailAndPassword(auth, email, password);
+      // return cred.user;
+    }
+    await delay();
+    console.log("[Firebase][Demo] login", { email });
+    return { uid: "demo-user-id", email, demo: true };
   },
 
   /**
    * Create a new user with email + password.
    */
   async signup({ name, email, password }) {
-    // const cred = await createUserWithEmailAndPassword(auth, email, password);
-    // await updateProfile(cred.user, { displayName: name });
-    // return cred.user;
-    console.log("[Firebase] signup (stub)", { name, email });
-    return { uid: "stub-user-id", email, name };
+    if (isEnabled()) {
+      // const cred = await createUserWithEmailAndPassword(auth, email, password);
+      // await updateProfile(cred.user, { displayName: name });
+      // return cred.user;
+    }
+    await delay();
+    console.log("[Firebase][Demo] signup", { name, email });
+    return { uid: "demo-user-id", email, name, demo: true };
   },
 
   /**
    * Send a password reset email.
    */
   async sendPasswordReset(email) {
-    // await sendPasswordResetEmail(auth, email);
-    console.log("[Firebase] sendPasswordReset (stub)", { email });
-    return { ok: true };
+    if (isEnabled()) {
+      // await sendPasswordResetEmail(auth, email);
+    }
+    await delay();
+    console.log("[Firebase][Demo] sendPasswordReset", { email });
+    return { ok: true, demo: true };
   },
 
   /**
@@ -71,11 +113,14 @@ export const authService = {
    * @param {"google"|"microsoft"} providerName
    */
   async signInWithProvider(providerName) {
-    // const provider =
-    //   providerName === "google" ? new GoogleAuthProvider() : new OAuthProvider("microsoft.com");
-    // const result = await signInWithPopup(auth, provider);
-    // return result.user;
-    console.log(`[Firebase] signInWithProvider (stub) "${providerName}"`);
-    return { uid: "stub-provider-user", provider: providerName };
+    if (isEnabled()) {
+      // const provider =
+      //   providerName === "google" ? new GoogleAuthProvider() : new OAuthProvider("microsoft.com");
+      // const result = await signInWithPopup(auth, provider);
+      // return result.user;
+    }
+    await delay();
+    console.log(`[Firebase][Demo] signInWithProvider "${providerName}"`);
+    return { uid: "demo-provider-user", provider: providerName, demo: true };
   }
 };

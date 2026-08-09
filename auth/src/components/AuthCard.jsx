@@ -1,8 +1,9 @@
 import React, { useState } from "react";
-import { ShieldCheck, X } from "lucide-react";
+import { ShieldCheck, X, FlaskConical } from "lucide-react";
 import LoginForm from "./LoginForm.jsx";
 import SignupForm from "./SignupForm.jsx";
 import ForgotPassword from "./ForgotPassword.jsx";
+import { isDemoMode } from "../config.js";
 
 /**
  * Centered tabbed authentication card with Login / Sign Up tabs
@@ -36,8 +37,18 @@ export default function AuthCard() {
             <ShieldCheck className="h-6 w-6 text-white" />
           </div>
           <h1 className="text-xl font-extrabold tracking-tight text-slate-900">ArchinthAI</h1>
-          <p className="text-sm text-slate-500">Sign in to continue to the studio</p>
+<p className="text-sm text-slate-500">Sign in to continue to the studio</p>
         </div>
+
+        {/* Demo mode notice */}
+        {isDemoMode && (
+          <div className="flex items-center gap-2 bg-amber-50 px-4 py-2.5 text-xs font-medium text-amber-700">
+            <FlaskConical className="h-4 w-4 shrink-0" />
+            Demo Mode — authentication is simulated. Add your API keys in the
+            <code className="rounded bg-amber-100 px-1 py-0.5 font-mono">auth/.env</code>
+            to go live.
+          </div>
+        )}
 
         {/* Tabs */}
         {view === "auth" ? (
