@@ -23,6 +23,7 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
+from auth import router as auth_router
 from defaults import DEFAULT_CONFIG
 from generation import generate_candidates, generate_design, modify_design
 from templates_data import TEMPLATES
@@ -36,6 +37,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Login / sign-up page (GET /auth, /auth/, /auth/assets/*). See auth.py
+# for why this previously rendered as a blank page.
+app.include_router(auth_router)
 
 # ---------------------------------------------------------------------------
 # Pydantic request models

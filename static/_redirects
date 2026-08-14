@@ -1,2 +1,5 @@
+/auth/assets/*  /auth/dist/assets/:splat  200
+/auth/  /auth/dist/index.html  200
+/auth  /auth/dist/index.html  200
 /creator  /creator.html 200
 /*  /index.html 200

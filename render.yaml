@@ -2,9 +2,18 @@ services:
   - type: web
     name: archinthai
     runtime: static
-    buildCommand: ""
+    buildCommand: "cd auth && npm install && npm run build"
     staticPublishPath: .
     routes:
+      - type: rewrite
+        source: /auth/assets/*
+        destination: /auth/dist/assets/*
+      - type: rewrite
+        source: /auth/
+        destination: /auth/dist/index.html
+      - type: rewrite
+        source: /auth
+        destination: /auth/dist/index.html
       - type: rewrite
         source: /creator
         destination: /creator.html

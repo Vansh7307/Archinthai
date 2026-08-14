@@ -1,5 +1,21 @@
 [build]
   publish = "."
+  command = "cd auth && npm install && npm run build"
+
+[[redirects]]
+  from = "/auth/assets/*"
+  to = "/auth/dist/assets/:splat"
+  status = 200
+
+[[redirects]]
+  from = "/auth/"
+  to = "/auth/dist/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/auth"
+  to = "/auth/dist/index.html"
+  status = 200
 
 [[redirects]]
   from = "/creator"

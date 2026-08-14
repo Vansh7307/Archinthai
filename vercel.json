@@ -2,9 +2,12 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "version": 2,
   "framework": null,
-  "buildCommand": "",
+  "buildCommand": "cd auth && npm install && npm run build",
   "outputDirectory": ".",
   "rewrites": [
+    { "source": "/auth/assets/(.*)", "destination": "/auth/dist/assets/$1" },
+    { "source": "/auth/", "destination": "/auth/dist/index.html" },
+    { "source": "/auth", "destination": "/auth/dist/index.html" },
     { "source": "/creator", "destination": "/creator.html" },
     { "source": "/", "destination": "/index.html" }
   ],
