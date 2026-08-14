@@ -2,7 +2,7 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "version": 2,
   "framework": null,
-  "buildCommand": "cd auth && npm install && npm run build",
+  "buildCommand": "cd auth && npm install && npm run build && cp dist/index.html index.html && rm -rf assets && cp -r dist/assets assets",
   "outputDirectory": ".",
   "rewrites": [
     { "source": "/auth/assets/(.*)", "destination": "/auth/dist/assets/$1" },

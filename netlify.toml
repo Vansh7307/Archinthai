@@ -1,6 +1,6 @@
 [build]
   publish = "."
-  command = "cd auth && npm install && npm run build"
+  command = "cd auth && npm install && npm run build && cp dist/index.html index.html && rm -rf assets && cp -r dist/assets assets"
 
 [[redirects]]
   from = "/auth/assets/*"
