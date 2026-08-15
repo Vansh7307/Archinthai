@@ -66,7 +66,7 @@ export async function sendResetEmail(toEmail, resetLink) {
       const res = await emailjs.send(
         emailjsConfig.serviceId.value,
         emailjsConfig.templateReset.value,
-        { to_email: toEmail, reset_link: resetLink },
+        { email: toEmail, reset_link: resetLink },
         emailjsConfig.publicKey.value
       );
       return { ...res, demo: false };
@@ -94,7 +94,7 @@ export async function sendAndTrackOtpEmail(toEmail) {
       await emailjs.send(
         emailjsConfig.serviceId.value,
         emailjsConfig.templateOtp.value,
-        { to_email: toEmail, otp },
+        { email: toEmail, otp },
         emailjsConfig.publicKey.value
       );
     } catch (err) {
