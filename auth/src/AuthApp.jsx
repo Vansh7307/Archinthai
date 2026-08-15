@@ -1,15 +1,20 @@
 import React, { useState, useEffect } from "react";
+import { authService } from "./services/firebase.js";
+import { isDemoMode } from "./config.js";
 
 /* ============================================================
-   AuthApp — 100% crash-proof single-file auth component.
+   AuthApp — real Firebase-backed auth (email/password, Google,
+   Microsoft, phone OTP), with a crash-proof demo fallback.
    ------------------------------------------------------------
-   • ZERO external dependencies (no firebase, no emailjs,
-     no lucide-react). All icons are inline SVG.
-   • Does NOT touch process.env / import.meta.env at global scope.
-   • Mock-first: works out of the box in demo mode.
-   • Integration comments show exactly where to plug in
-     Firebase / MSG91 / EmailJS.
+   • Falls back to a clearly-labelled Demo Mode automatically if
+     no Firebase project is configured (see auth/.env.example),
+     so the UI never crashes with a white screen.
+   • On any successful sign-in (password, Google, Microsoft,
+     phone OTP, or email link) the user is redirected to the main
+     ArchinthAI dashboard at "/".
    ============================================================ */
+
+const DASHBOARD_URL = "/";
 
 /* ---------------- Inline SVG icon components ---------------- */
 const Icon = {
@@ -182,6 +187,7 @@ export default function AuthApp() {
   const [authMethod, setAuthMethod] = useState("password"); // "password" | "otp"
   const [otpMode, setOtpMode] = useState("email"); // "email" | "phone"
   const [otpTarget, setOtpTarget] = useState("");
+  const [otpCountry, setOtpCountry] = useState("+91");
   const [otpCode, setOtpCode] = useState("");
   const [otpSent, setOtpSent] = useState(false);
   const [forgotMethod, setForgotMethod] = useState("email");
@@ -194,6 +200,16 @@ export default function AuthApp() {
   const [errors, setErrors] = useState({});
   const [countdown, setCountdown] = useState(0);
 
+  // Firebase phone-auth confirmation handles (kept out of the
+  // serializable form state since they're SDK objects).
+  const [loginPhoneConfirmation, setLoginPhoneConfirmation] = useState(null);
+  const [forgotPhoneConfirmation, setForgotPhoneConfirmation] = useState(null);
+  const [forgotOtpCode, setForgotOtpCode] = useState("");
+
+  const goToDashboard = () => {
+    setTimeout(() => { window.location.href = DASHBOARD_URL; }, 900);
+  };
+
   // Resend countdown timer
   useEffect(() => {
     if (countdown <= 0) return;
@@ -201,7 +217,23 @@ export default function AuthApp() {
     return () => clearTimeout(t);
   }, [countdown]);
 
-  /* ------- Simulated handlers (mock-first) ------- */
+  // If the user arrived via a passwordless email sign-in link,
+  // complete the sign-in automatically and drop them on the
+  // dashboard - no further clicks needed.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const result = await authService.completeEmailLinkSignIn();
+      if (result && !cancelled) {
+        toast.success("Signed in successfully!");
+        goToDashboard();
+      }
+    })();
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  /* ------- Real auth handlers (Firebase-backed, demo fallback) ------- */
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -212,12 +244,15 @@ export default function AuthApp() {
     if (Object.keys(errs).length) return;
 
     setLoading(true);
-    // [INTEGRATION] Firebase Auth — email/password
-    // import { signInWithEmailAndPassword } from "firebase/auth";
-    // await signInWithEmailAndPassword(auth, login.identifier, login.password);
-    await new Promise((r) => setTimeout(r, 900)); // simulate network
-    setLoading(false);
-    toast.success("Signed in successfully! (demo)");
+    try {
+      const { demo } = await authService.login(login.identifier.trim(), login.password);
+      toast.success(demo ? "Signed in (Demo Mode - configure Firebase for real accounts)." : "Signed in successfully!");
+      goToDashboard();
+    } catch (err) {
+      toast.error(err.message || "Sign-in failed. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleSignup = async (e) => {
@@ -236,13 +271,20 @@ export default function AuthApp() {
     }
 
     setLoading(true);
-    // [INTEGRATION] Firebase Auth — create user
-    // import { createUserWithEmailAndPassword } from "firebase/auth";
-    // await createUserWithEmailAndPassword(auth, signup.email, signup.password);
-    await new Promise((r) => setTimeout(r, 900));
-    setLoading(false);
-    toast.success("Account created successfully! (demo)");
-    setSignup({ fullName: "", username: "", email: "", phone: "", countryCode: "+91", password: "", confirmPassword: "", showPassword: false });
+    try {
+      const { demo } = await authService.signup({
+        name: signup.fullName.trim(),
+        email: signup.email.trim(),
+        password: signup.password
+      });
+      toast.success(demo ? "Account created (Demo Mode - configure Firebase for real accounts)." : "Account created successfully!");
+      setSignup({ fullName: "", username: "", email: "", phone: "", countryCode: "+91", password: "", confirmPassword: "", showPassword: false });
+      goToDashboard();
+    } catch (err) {
+      toast.error(err.message || "Could not create your account. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleSendOTP = async () => {
@@ -251,46 +293,48 @@ export default function AuthApp() {
       return;
     }
     setLoading(true);
-    if (otpMode === "phone") {
-      // [INTEGRATION] MSG91 — phone OTP
-      // await fetch(
-      //   `https://control.msg91.com/api/v5/otp?template_id=YOUR_TEMPLATE&mobile=${encodeURIComponent(
-      //     countryCode + otpTarget
-      //   )}&authkey=YOUR_AUTH_KEY&sender=YOUR_SENDER`,
-      //   { method: "POST" }
-      // );
-      await new Promise((r) => setTimeout(r, 900));
-      toast.success("OTP sent to your phone. (demo)");
-    } else {
-      // [INTEGRATION] EmailJS — email OTP
-      // import emailjs from "@emailjs/browser";
-      // await emailjs.send("YOUR_SERVICE", "YOUR_OTP_TEMPLATE",
-      //   { to_email: otpTarget, otp: "123456" }, "YOUR_PUBLIC_KEY");
-      await new Promise((r) => setTimeout(r, 900));
-      toast.success("OTP sent to your email. (demo)");
+    try {
+      if (otpMode === "phone") {
+        const fullNumber = `${otpCountry}${otpTarget.trim()}`;
+        const { confirmation, demo } = await authService.sendPhoneOtp(fullNumber, "recaptcha-container");
+        setLoginPhoneConfirmation(confirmation);
+        toast.success(demo ? "OTP sent (Demo Mode - enter any code)." : "OTP sent to your phone.");
+      } else {
+        const completionUrl = window.location.origin + window.location.pathname;
+        const { demo } = await authService.sendEmailSignInLink(otpTarget.trim(), completionUrl);
+        toast.success(demo ? "OTP sent (Demo Mode - enter any code)." : "Check your email for a sign-in link.");
+      }
+      setOtpSent(true);
+      setCountdown(30);
+    } catch (err) {
+      toast.error(err.message || "Couldn't send the code. Please try again.");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
-    setOtpSent(true);
-    setCountdown(30);
   };
 
   const handleVerifyOTP = async (e) => {
     e.preventDefault();
-    if (!otpCode.trim()) {
+    if (otpMode === "phone" && !otpCode.trim()) {
       setErrors({ otp: "Enter the OTP you received." });
       return;
     }
     setLoading(true);
-    // [INTEGRATION] MSG91 — verify OTP
-    // await fetch(
-    //   `https://control.msg91.com/api/v5/otp/verify?otp=${otpCode}&mobile=${encodeURIComponent(
-    //     countryCode + otpTarget
-    //   )}&authkey=YOUR_AUTH_KEY`,
-    //   { method: "POST" }
-    // );
-    await new Promise((r) => setTimeout(r, 900));
-    setLoading(false);
-    toast.success("OTP verified! Signed in. (demo)");
+    try {
+      if (otpMode === "phone") {
+        const { demo } = await authService.verifyPhoneOtp(loginPhoneConfirmation, otpCode.trim());
+        toast.success(demo ? "Signed in (Demo Mode)." : "OTP verified! Signed in.");
+        goToDashboard();
+      } else {
+        // Email OTP is a magic-link flow: nothing to verify here -
+        // the link itself completes sign-in when the user clicks it.
+        toast.info("Click the link we emailed you to finish signing in.");
+      }
+    } catch (err) {
+      toast.error(err.message || "That code isn't correct. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleForgot = async (e) => {
@@ -300,30 +344,51 @@ export default function AuthApp() {
       return;
     }
     setLoading(true);
-    if (forgotMethod === "email") {
-      // [INTEGRATION] Firebase Auth — password reset
-      // import { sendPasswordResetEmail } from "firebase/auth";
-      // await sendPasswordResetEmail(auth, forgotTarget);
-      await new Promise((r) => setTimeout(r, 900));
-      toast.success("Reset link sent to your email. (demo)");
-    } else {
-      // [INTEGRATION] MSG91 — password reset via phone OTP
-      await new Promise((r) => setTimeout(r, 900));
-      toast.success("Reset OTP sent to your phone. (demo)");
+    try {
+      if (forgotMethod === "email") {
+        const { demo } = await authService.sendPasswordReset(forgotTarget.trim());
+        toast.success(demo ? "Reset link sent (Demo Mode)." : "Reset link sent to your email.");
+        setCountdown(30);
+      } else {
+        const fullNumber = `${forgotCountry}${forgotTarget.trim()}`;
+        const { confirmation, demo } = await authService.sendPhoneOtp(fullNumber, "recaptcha-container");
+        setForgotPhoneConfirmation(confirmation);
+        toast.success(demo ? "OTP sent (Demo Mode - enter any code)." : "OTP sent to your phone. Enter it below to verify and sign in.");
+        setCountdown(30);
+      }
+    } catch (err) {
+      toast.error(err.message || "Couldn't send the reset code. Please try again.");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
-    setCountdown(30);
+  };
+
+  const handleForgotPhoneVerify = async (code) => {
+    setLoading(true);
+    try {
+      const { demo } = await authService.verifyPhoneOtp(forgotPhoneConfirmation, code);
+      toast.success(demo ? "Verified (Demo Mode). Signed in." : "Phone verified! Signed in.");
+      goToDashboard();
+    } catch (err) {
+      toast.error(err.message || "That code isn't correct. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleProvider = async (name) => {
     setProvider(name);
-    // [INTEGRATION] Firebase Auth — social popup
-    // import { signInWithPopup, GoogleAuthProvider, OAuthProvider } from "firebase/auth";
-    // const p = name === "google" ? new GoogleAuthProvider() : new OAuthProvider("microsoft.com");
-    // await signInWithPopup(auth, p);
-    await new Promise((r) => setTimeout(r, 900));
-    setProvider(null);
-    toast.success(`Signed in with ${name === "google" ? "Google" : "Microsoft"} (demo).`);
+    try {
+      const { demo } = await authService.signInWithProvider(name);
+      toast.success(demo
+        ? `Signed in with ${name === "google" ? "Google" : "Microsoft"} (Demo Mode - configure Firebase for real accounts).`
+        : `Signed in with ${name === "google" ? "Google" : "Microsoft"}!`);
+      goToDashboard();
+    } catch (err) {
+      toast.error(err.message || `${name === "google" ? "Google" : "Microsoft"} sign-in failed. Please try again.`);
+    } finally {
+      setProvider(null);
+    }
   };
 
   /* ---------------- Render helpers ---------------- */
@@ -368,6 +433,9 @@ export default function AuthApp() {
         setForgotMethod(value);
         setErrors({});
         setForgotTarget("");
+        setForgotPhoneConfirmation(null);
+        setForgotOtpCode("");
+        setCountdown(0);
       }}
       className={`flex-1 rounded-xl border px-3 py-3 text-sm font-semibold transition ${
         forgotMethod === value
@@ -402,11 +470,16 @@ export default function AuthApp() {
               <p className="text-sm text-archinth-muted">Sign in to continue to the studio</p>
             </div>
 
-            {/* Demo notice */}
-            <div className="flex items-center gap-2 bg-archinth-secondary/15 px-4 py-2.5 text-xs font-medium text-archinth-success">
-              <Icon.Alert className="h-4 w-4 shrink-0" />
-              Demo Mode — authentication is simulated and works out of the box.
-            </div>
+            {/* Demo notice — only shown when no Firebase project is configured */}
+            {isDemoMode && (
+              <div className="flex items-center gap-2 bg-archinth-secondary/15 px-4 py-2.5 text-xs font-medium text-archinth-success">
+                <Icon.Alert className="h-4 w-4 shrink-0" />
+                Demo Mode — connect Firebase (see auth/.env.example) to enable real sign-in.
+              </div>
+            )}
+
+            {/* Invisible reCAPTCHA anchor for Firebase phone-auth OTP */}
+            <div id="recaptcha-container" />
 
             {view === "auth" ? (
               <>
@@ -495,7 +568,7 @@ export default function AuthApp() {
                             <label className="mb-1.5 block text-sm font-medium text-archinth-text">{otpMode === "email" ? "Email Address" : "Phone Number"}</label>
                             <div className="flex">
                               {otpMode === "phone" && (
-                                <select value={signup.countryCode} onChange={(e) => setSignup({ ...signup, countryCode: e.target.value })} className="rounded-l-xl border border-stone-200 bg-white px-3 text-sm text-archinth-text focus:outline-none">
+                                <select value={otpCountry} onChange={(e) => setOtpCountry(e.target.value)} className="rounded-l-xl border border-stone-200 bg-white px-3 text-sm text-archinth-text focus:outline-none">
                                   {countryCodes.map((c) => <option key={c}>{c}</option>)}
                                 </select>
                               )}
@@ -514,7 +587,7 @@ export default function AuthApp() {
                               {loading ? <Icon.Spinner className="h-4 w-4" /> : <Icon.Phone className="h-4 w-4" />}
                               {loading ? "Sending..." : "Send OTP"}
                             </button>
-                          ) : (
+                          ) : otpMode === "phone" ? (
                             <>
                               <div>
                                 <label className="mb-1.5 block text-sm font-medium text-archinth-text">Enter OTP</label>
@@ -536,6 +609,20 @@ export default function AuthApp() {
                                   <span className="inline-flex items-center gap-1"><Icon.Timer className="h-4 w-4 text-archinth-primary" />Resend in {countdown}s</span>
                                 ) : (
                                   <button type="button" onClick={handleSendOTP} className="font-semibold text-archinth-primary hover:underline">Resend OTP</button>
+                                )}
+                              </div>
+                            </>
+                          ) : (
+                            <>
+                              <div className="flex items-center gap-2 rounded-xl bg-stone-50 px-3 py-2.5 text-sm font-medium text-archinth-muted">
+                                <Icon.Mail className="h-4 w-4 shrink-0 text-archinth-primary" />
+                                Check your email and click the sign-in link to continue.
+                              </div>
+                              <div className="flex items-center justify-center gap-2 text-xs font-medium text-archinth-muted">
+                                {countdown > 0 ? (
+                                  <span className="inline-flex items-center gap-1"><Icon.Timer className="h-4 w-4 text-archinth-primary" />Resend available in {countdown}s</span>
+                                ) : (
+                                  <button type="button" onClick={handleSendOTP} className="font-semibold text-archinth-primary hover:underline">Resend Link</button>
                                 )}
                               </div>
                             </>
@@ -643,28 +730,55 @@ export default function AuthApp() {
                 </div>
 
                 <form onSubmit={handleForgot} noValidate className="space-y-4">
-                  <div>
-                    <label className="mb-1.5 block text-sm font-medium text-archinth-text">{forgotMethod === "email" ? "Email Address" : "Phone Number"}</label>
-                    <div className="flex">
-                      {forgotMethod === "phone" && (
-                        <select value={forgotCountry} onChange={(e) => setForgotCountry(e.target.value)} className="rounded-l-xl border border-stone-200 bg-white px-2 text-sm text-archinth-text focus:outline-none">
-                          {countryCodes.map((c) => <option key={c}>{c}</option>)}
-                        </select>
-                      )}
-                      <input
-                        type={forgotMethod === "email" ? "email" : "tel"}
-                        value={forgotTarget}
-                        onChange={(e) => setForgotTarget(e.target.value)}
-                        placeholder={forgotMethod === "email" ? "you@example.com" : "9876543210"}
-                        className={`${inputCls} ${forgotMethod === "phone" ? "rounded-l-none" : ""}`}
-                      />
+                  {!(forgotMethod === "phone" && forgotPhoneConfirmation) && (
+                    <div>
+                      <label className="mb-1.5 block text-sm font-medium text-archinth-text">{forgotMethod === "email" ? "Email Address" : "Phone Number"}</label>
+                      <div className="flex">
+                        {forgotMethod === "phone" && (
+                          <select value={forgotCountry} onChange={(e) => setForgotCountry(e.target.value)} className="rounded-l-xl border border-stone-200 bg-white px-2 text-sm text-archinth-text focus:outline-none">
+                            {countryCodes.map((c) => <option key={c}>{c}</option>)}
+                          </select>
+                        )}
+                        <input
+                          type={forgotMethod === "email" ? "email" : "tel"}
+                          value={forgotTarget}
+                          onChange={(e) => setForgotTarget(e.target.value)}
+                          placeholder={forgotMethod === "email" ? "you@example.com" : "9876543210"}
+                          className={`${inputCls} ${forgotMethod === "phone" ? "rounded-l-none" : ""}`}
+                        />
+                      </div>
                     </div>
-                  </div>
+                  )}
 
-                  <button type="submit" className={btnPrimary} disabled={loading}>
-                    {loading ? <Icon.Spinner className="h-4 w-4" /> : <Icon.Mail className="h-4 w-4" />}
-                    {loading ? "Sending..." : "Send Reset Code / OTP"}
-                  </button>
+                  {!(forgotMethod === "phone" && forgotPhoneConfirmation) ? (
+                    <button type="submit" className={btnPrimary} disabled={loading}>
+                      {loading ? <Icon.Spinner className="h-4 w-4" /> : <Icon.Mail className="h-4 w-4" />}
+                      {loading ? "Sending..." : "Send Reset Code / OTP"}
+                    </button>
+                  ) : (
+                    <>
+                      <div>
+                        <label className="mb-1.5 block text-sm font-medium text-archinth-text">Enter OTP</label>
+                        <input
+                          type="text"
+                          inputMode="numeric"
+                          value={forgotOtpCode}
+                          onChange={(e) => setForgotOtpCode(e.target.value)}
+                          placeholder="6-digit code"
+                          className={`${inputCls} text-center tracking-[0.5em]`}
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleForgotPhoneVerify(forgotOtpCode.trim())}
+                        className={btnPrimary}
+                        disabled={loading || !forgotOtpCode.trim()}
+                      >
+                        {loading ? <Icon.Spinner className="h-4 w-4" /> : <Icon.Check className="h-4 w-4" />}
+                        {loading ? "Verifying..." : "Verify & Sign In"}
+                      </button>
+                    </>
+                  )}
 
                   {countdown > 0 && (
                     <div className="flex animate-pulse items-center justify-center gap-2 rounded-xl bg-stone-50 px-3 py-2.5 text-sm font-medium text-archinth-muted">
@@ -674,7 +788,18 @@ export default function AuthApp() {
                   )}
                 </form>
 
-                <button type="button" onClick={() => setView("auth")} className="mt-5 inline-flex w-full items-center justify-center gap-1.5 rounded-xl px-3 py-2 text-sm font-semibold text-archinth-muted hover:text-archinth-text">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setView("auth");
+                    setForgotPhoneConfirmation(null);
+                    setForgotOtpCode("");
+                    setForgotTarget("");
+                    setCountdown(0);
+                    setErrors({});
+                  }}
+                  className="mt-5 inline-flex w-full items-center justify-center gap-1.5 rounded-xl px-3 py-2 text-sm font-semibold text-archinth-muted hover:text-archinth-text"
+                >
                   <Icon.Arrow className="h-4 w-4" />
                   Back to Login
                 </button>
