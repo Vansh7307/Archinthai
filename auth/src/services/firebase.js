@@ -1,22 +1,31 @@
 // ============================================================
 // FIREBASE AUTHENTICATION SERVICE
 // ------------------------------------------------------------
-// Real wrapper around Firebase Auth (email/password, Google,
-// Microsoft, and phone OTP). Reads keys from the environment via
-// `config.js`. If Firebase is not configured (missing/placeholder
-// keys), every call automatically falls back to an internal
-// Mock/Demo Mode so the UI never crashes with a white screen and
-// still lets you click through the flow to see how it behaves.
+// Real wrapper around Firebase Auth for the parts that need a
+// managed identity provider: Google OAuth, Microsoft OAuth,
+// email/password login & signup, and password-reset email.
 //
-// To enable real auth:
-//   1. Create a Firebase project at https://console.firebase.google.com
-//   2. Authentication -> Sign-in method -> enable Email/Password,
-//      Google, Microsoft, and Phone.
-//   3. Add a Web app to the project to get your config values.
-//   4. Create `auth/.env` (see `auth/.env.example`) with the
-//      VITE_FIREBASE_* values from step 3.
-//   5. Add your production domain (and localhost) under
-//      Authentication -> Settings -> Authorized domains.
+// Phone OTP and email OTP are handled separately by msg91.js and
+// emailjs.js (see those files) - that split lets phone/email OTP
+// work with zero Google/Microsoft app registration, which matters
+// if you don't yet have a verified custom domain for OAuth.
+//
+// Google sign-in through Firebase is effectively zero-config:
+// Firebase auto-provisions its own OAuth client for Google, and
+// localhost/127.0.0.1 are authorized by default - you only need to
+// add your real domain under Authentication > Settings > Authorized
+// domains once you have one (no Google domain-verification process
+// required, unlike a raw Google Cloud OAuth client).
+//
+// Microsoft sign-in through Firebase is NOT zero-config - it needs
+// a real Azure AD (Entra ID) app registration configured in the
+// Firebase console. Until that's done, signInWithProvider("microsoft")
+// will throw auth/operation-not-allowed; AuthApp.jsx catches that
+// and gracefully drops the user into the OTP flow instead, per the
+// "domain limitation" fallback requirement.
+//
+// If Firebase itself isn't configured at all, every call falls
+// back to an internal Mock/Demo Mode so the UI never crashes.
 // ============================================================
 
 import { initializeApp, getApps, getApp } from "firebase/app";
@@ -28,12 +37,7 @@ import {
   signInWithPopup,
   GoogleAuthProvider,
   OAuthProvider,
-  updateProfile,
-  RecaptchaVerifier,
-  signInWithPhoneNumber,
-  sendSignInLinkToEmail,
-  isSignInWithEmailLink,
-  signInWithEmailLink
+  updateProfile
 } from "firebase/auth";
 
 import { isFirebaseConfigured, firebase } from "../config.js";
@@ -66,9 +70,11 @@ const isEnabled = () => firebaseEnabled && !!auth;
 
 /**
  * Turn a raw Firebase Auth error into a short, friendly message
- * that's safe to show directly in a toast.
+ * that's safe to show directly in a toast. Also tags whether the
+ * failure means "this provider isn't configured / this domain
+ * isn't authorized" so callers can offer a graceful fallback.
  */
-function friendlyError(err) {
+function describeError(err) {
   const code = err && err.code ? String(err.code) : "";
   const map = {
     "auth/invalid-email": "That email address doesn't look right.",
@@ -80,16 +86,27 @@ function friendlyError(err) {
     "auth/popup-closed-by-user": "Sign-in was cancelled.",
     "auth/cancelled-popup-request": "Sign-in was cancelled.",
     "auth/popup-blocked": "Your browser blocked the sign-in popup. Please allow popups and try again.",
-    "auth/account-exists-with-different-credential": "An account already exists using a different sign-in method. Try logging in with that method instead.",
-    "auth/unauthorized-domain": "This domain isn't authorized for sign-in yet. Add it under Firebase Authentication > Settings > Authorized domains.",
-    "auth/too-many-requests": "Too many attempts. Please wait a moment and try again.",
-    "auth/invalid-phone-number": "That phone number doesn't look right.",
-    "auth/code-expired": "That code has expired. Please request a new one.",
-    "auth/invalid-verification-code": "That code isn't correct. Please try again.",
-    "auth/missing-verification-code": "Please enter the code you received.",
-    "auth/operation-not-allowed": "This sign-in method isn't enabled for this project yet."
+    "auth/account-exists-with-different-credential":
+      "An account already exists using a different sign-in method. Try logging in with that method instead.",
+    "auth/too-many-requests": "Too many attempts. Please wait a moment and try again."
   };
-  return map[code] || (err && err.message) || "Something went wrong. Please try again.";
+  // Codes that specifically mean "provider/domain not set up" -
+  // these are the ones worth gracefully falling back to OTP for,
+  // rather than just showing an error and stopping.
+  const unavailableCodes = new Set([
+    "auth/operation-not-allowed",
+    "auth/unauthorized-domain",
+    "auth/configuration-not-found",
+    "auth/invalid-oauth-provider",
+    "auth/internal-error"
+  ]);
+  const unavailable = unavailableCodes.has(code);
+  const message =
+    map[code] ||
+    (unavailable
+      ? "This sign-in method isn't set up for this domain yet."
+      : (err && err.message) || "Something went wrong. Please try again.");
+  return { message, unavailable, cancelled: code === "auth/popup-closed-by-user" || code === "auth/cancelled-popup-request" };
 }
 
 const delay = (ms = 800) => new Promise((r) => setTimeout(r, ms));
@@ -104,7 +121,8 @@ export const authService = {
         const cred = await signInWithEmailAndPassword(auth, email, password);
         return { user: cred.user, demo: false };
       } catch (err) {
-        throw new Error(friendlyError(err));
+        const { message } = describeError(err);
+        throw new Error(message);
       }
     }
     await delay();
@@ -126,7 +144,8 @@ export const authService = {
         }
         return { user: cred.user, demo: false };
       } catch (err) {
-        throw new Error(friendlyError(err));
+        const { message } = describeError(err);
+        throw new Error(message);
       }
     }
     await delay();
@@ -141,7 +160,8 @@ export const authService = {
         await sendPasswordResetEmail(auth, email);
         return { ok: true, demo: false };
       } catch (err) {
-        throw new Error(friendlyError(err));
+        const { message } = describeError(err);
+        throw new Error(message);
       }
     }
     await delay();
@@ -149,7 +169,13 @@ export const authService = {
     return { ok: true, demo: true };
   },
 
-  /** Sign in with a third-party popup provider ("google" | "microsoft"). */
+  /**
+   * Sign in with a third-party popup provider ("google" | "microsoft").
+   * On failure, throws an Error whose `.fallbackToOtp` flag tells the
+   * caller whether this looks like a "not configured for this
+   * domain" situation worth gracefully falling back to OTP for,
+   * versus a plain "you cancelled the popup" situation.
+   */
   async signInWithProvider(providerName) {
     if (isEnabled()) {
       try {
@@ -158,89 +184,15 @@ export const authService = {
         const result = await signInWithPopup(auth, provider);
         return { user: result.user, demo: false };
       } catch (err) {
-        throw new Error(friendlyError(err));
+        const { message, unavailable, cancelled } = describeError(err);
+        const wrapped = new Error(message);
+        wrapped.fallbackToOtp = unavailable && !cancelled;
+        wrapped.cancelled = cancelled;
+        throw wrapped;
       }
     }
     await delay();
     console.log(`[Firebase][Demo] signInWithProvider "${providerName}"`);
     return { user: { uid: "demo-provider-user", provider: providerName }, demo: true };
-  },
-
-  /**
-   * Phone auth, step 1: send an OTP via SMS using an invisible
-   * reCAPTCHA bound to the DOM node with id `containerId`.
-   * Returns a confirmation handle to pass into verifyPhoneOtp.
-   */
-  async sendPhoneOtp(fullPhoneNumber, containerId = "recaptcha-container") {
-    if (isEnabled()) {
-      try {
-        if (!window.__archinthRecaptcha) {
-          window.__archinthRecaptcha = new RecaptchaVerifier(auth, containerId, { size: "invisible" });
-        }
-        const confirmation = await signInWithPhoneNumber(auth, fullPhoneNumber, window.__archinthRecaptcha);
-        return { confirmation, demo: false };
-      } catch (err) {
-        throw new Error(friendlyError(err));
-      }
-    }
-    await delay();
-    console.log("[Firebase][Demo] sendPhoneOtp", { fullPhoneNumber });
-    return { confirmation: null, demo: true };
-  },
-
-  /** Phone auth, step 2: confirm the code the user received. */
-  async verifyPhoneOtp(confirmation, code) {
-    if (confirmation) {
-      try {
-        const cred = await confirmation.confirm(code);
-        return { user: cred.user, demo: false };
-      } catch (err) {
-        throw new Error(friendlyError(err));
-      }
-    }
-    await delay();
-    console.log("[Firebase][Demo] verifyPhoneOtp", { code });
-    return { user: { uid: "demo-phone-user" }, demo: true };
-  },
-
-  /**
-   * Passwordless email sign-in, step 1: email the user a magic
-   * link. `completionUrl` must be an authorized domain page that
-   * calls completeEmailLinkSignIn() on load (the /auth page itself
-   * does this automatically).
-   */
-  async sendEmailSignInLink(email, completionUrl) {
-    if (isEnabled()) {
-      try {
-        await sendSignInLinkToEmail(auth, email, { url: completionUrl, handleCodeInApp: true });
-        window.localStorage.setItem("archinthai:emailForSignIn", email);
-        return { ok: true, demo: false };
-      } catch (err) {
-        throw new Error(friendlyError(err));
-      }
-    }
-    await delay();
-    console.log("[Firebase][Demo] sendEmailSignInLink", { email });
-    return { ok: true, demo: true };
-  },
-
-  /**
-   * Passwordless email sign-in, step 2: call this on page load. If
-   * the current URL is a valid sign-in link, completes the sign-in
-   * and returns the user; otherwise returns null.
-   */
-  async completeEmailLinkSignIn() {
-    if (!isEnabled()) return null;
-    try {
-      if (!isSignInWithEmailLink(auth, window.location.href)) return null;
-      let email = window.localStorage.getItem("archinthai:emailForSignIn");
-      if (!email) return null; // Need the email to complete sign-in; bail out quietly.
-      const cred = await signInWithEmailLink(auth, email, window.location.href);
-      window.localStorage.removeItem("archinthai:emailForSignIn");
-      return { user: cred.user, demo: false };
-    } catch (err) {
-      console.warn("[Firebase] completeEmailLinkSignIn failed:", err);
-      return null;
-    }
   }
 };

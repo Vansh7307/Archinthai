@@ -141,11 +141,13 @@ const isEmailjsConfigured = () =>
   emailjs.publicKey.configured && emailjs.serviceId.configured;
 
 /**
- * Global demo-mode flag. If ANY primary auth service is not
- * configured, the whole app runs in Demo Mode so it renders
- * cleanly without throwing.
+ * Global demo-mode flag. Only true if NONE of the auth providers
+ * are configured (Firebase for password/Google/Microsoft, MSG91
+ * for phone OTP, EmailJS for email OTP) - if at least one is set
+ * up, that path is real and the banner shouldn't claim everything
+ * is simulated.
  */
-const isDemoMode = !isFirebaseConfigured();
+const isDemoMode = !isFirebaseConfigured() && !isMsg91Configured() && !isEmailjsConfigured();
 
 export {
   readEnv,

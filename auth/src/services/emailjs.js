@@ -1,20 +1,31 @@
 // ============================================================
-// EMAIL.JS FALLBACK SERVICE
+// EMAIL.JS EMAIL OTP / RESET-LINK SERVICE
 // ------------------------------------------------------------
-// Safe wrapper around Email.js for sending custom emails
-// (password reset links / OTP notifications). Reads keys from
-// the environment via config.js. If Email.js is not configured,
-// all calls fall back to an internal Mock/Demo Mode so the UI
-// never crashes with a white screen.
+// Real wrapper around EmailJS for sending custom emails (password
+// reset links / one-time codes). Reads keys from the environment
+// via config.js. If EmailJS is not configured, all calls fall back
+// to an internal Mock/Demo Mode so the UI never crashes with a
+// white screen.
 //
 // Docs: https://www.emailjs.com/docs/
-// To enable: `npm i @emailjs/browser` and set the VITE_EMAILJS_*
-// env vars (see config.js notes).
+// To enable: set VITE_EMAILJS_PUBLIC_KEY, VITE_EMAILJS_SERVICE_ID,
+// VITE_EMAILJS_RESET_TEMPLATE_ID, VITE_EMAILJS_OTP_TEMPLATE_ID (see
+// config.js / auth/.env.example). EmailJS's public key is designed
+// to be used client-side, unlike MSG91's authkey.
+//
+// ARCHITECTURE NOTE: EmailJS only delivers mail, it doesn't verify
+// codes for you. So this module generates a random 6-digit code,
+// remembers it (with a short expiry) in sessionStorage, emails it
+// via your EmailJS template, and verifies the user's input against
+// that stored value. This is a reasonable zero-backend pattern for
+// a static site, but note that a determined attacker with devtools
+// access to the same browser session could read the stored code -
+// for stronger guarantees, verify server-side instead once you have
+// a backend.
 // ============================================================
 
-// import emailjs from "@emailjs/browser";
-
-import { isEmailjsConfigured, emailjs } from "../config.js";
+import emailjs from "@emailjs/browser";
+import { isEmailjsConfigured, emailjs as emailjsConfig } from "../config.js";
 
 const emailjsReady = (() => {
   try {
@@ -25,21 +36,23 @@ const emailjsReady = (() => {
 })();
 
 const delay = (ms = 800) => new Promise((r) => setTimeout(r, ms));
+const OTP_TTL_MS = 5 * 60 * 1000; // 5 minutes
+const storageKey = (email) => `archinthai:emailOtp:${email.trim().toLowerCase()}`;
 
-/**
- * Send a custom password reset email.
- * @param {string} toEmail
- * @param {string} resetLink
- */
+function generateOtp() {
+  return String(Math.floor(100000 + Math.random() * 900000));
+}
+
+/** Send a password reset email with a direct link. */
 export async function sendResetEmail(toEmail, resetLink) {
   if (emailjsReady) {
-    // const res = await emailjs.send(
-    //   emailjs.serviceId.value,
-    //   emailjs.templateReset.value,
-    //   { to_email: toEmail, reset_link: resetLink },
-    //   emailjs.publicKey.value
-    // );
-    // return res;
+    const res = await emailjs.send(
+      emailjsConfig.serviceId.value,
+      emailjsConfig.templateReset.value,
+      { to_email: toEmail, reset_link: resetLink },
+      emailjsConfig.publicKey.value
+    );
+    return { ...res, demo: false };
   }
   await delay();
   console.log("[EmailJS][Demo] sendResetEmail", { toEmail, resetLink });
@@ -47,21 +60,46 @@ export async function sendResetEmail(toEmail, resetLink) {
 }
 
 /**
- * Send a custom OTP notification email.
- * @param {string} toEmail
- * @param {string} otp
+ * Generate a fresh one-time code, remember it locally with a short
+ * expiry, and email it to the user. Returns { demo } — never
+ * returns the code itself to the caller (it lives only in
+ * sessionStorage + the outbound email).
  */
-export async function sendOtpEmail(toEmail, otp) {
+export async function sendAndTrackOtpEmail(toEmail) {
+  const otp = generateOtp();
+  const record = { otp, expiresAt: Date.now() + OTP_TTL_MS };
+
   if (emailjsReady) {
-    // const res = await emailjs.send(
-    //   emailjs.serviceId.value,
-    //   emailjs.templateOtp.value,
-    //   { to_email: toEmail, otp: otp },
-    //   emailjs.publicKey.value
-    // );
-    // return res;
+    await emailjs.send(
+      emailjsConfig.serviceId.value,
+      emailjsConfig.templateOtp.value,
+      { to_email: toEmail, otp },
+      emailjsConfig.publicKey.value
+    );
+    window.sessionStorage.setItem(storageKey(toEmail), JSON.stringify(record));
+    return { demo: false };
   }
+
   await delay();
-  console.log("[EmailJS][Demo] sendOtpEmail", { toEmail, otp });
-  return { status: 200, demo: true };
+  console.log("[EmailJS][Demo] sendAndTrackOtpEmail", { toEmail, otp });
+  window.sessionStorage.setItem(storageKey(toEmail), JSON.stringify(record));
+  return { demo: true, devOtp: otp }; // surfaced only in demo mode, for local testing
 }
+
+/** Verify a code the user typed in against the locally-tracked one. */
+export function verifyTrackedOtpEmail(toEmail, code) {
+  const raw = window.sessionStorage.getItem(storageKey(toEmail));
+  if (!raw) throw new Error("That code has expired. Please request a new one.");
+  const { otp, expiresAt } = JSON.parse(raw);
+  if (Date.now() > expiresAt) {
+    window.sessionStorage.removeItem(storageKey(toEmail));
+    throw new Error("That code has expired. Please request a new one.");
+  }
+  if (String(code).trim() !== otp) {
+    throw new Error("That code isn't correct. Please try again.");
+  }
+  window.sessionStorage.removeItem(storageKey(toEmail));
+  return true;
+}
+
+export const isEnabled = () => emailjsReady;
