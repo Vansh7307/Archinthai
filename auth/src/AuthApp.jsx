@@ -333,9 +333,22 @@ export default function AuthApp() {
     setLoading(true);
     try {
       if (forgotMethod === "email") {
-        const { demo } = await authService.sendPasswordReset(forgotTarget.trim());
-        toast.success(demo ? "Reset link sent (Demo Mode)." : "Reset link sent to your email.");
-        setCountdown(30);
+        if (authService.isEnabled()) {
+          // Real Firebase account exists - send an actual password
+          // reset link that changes that account's password.
+          await authService.sendPasswordReset(forgotTarget.trim());
+          toast.success("Reset link sent to your email.");
+          setCountdown(30);
+        } else {
+          // No Firebase project configured yet, so there's no real
+          // password to reset in the first place. Fall back to a
+          // real EmailJS OTP: verifying it proves email ownership
+          // and signs the user in directly, same as OTP login.
+          const { demo, devOtp } = await emailjsService.sendAndTrackOtpEmail(forgotTarget.trim());
+          toast.success(demo ? `OTP sent (Demo Mode - code is ${devOtp}).` : "OTP sent to your email. Enter it below to verify and sign in.");
+          setForgotOtpSent(true);
+          setCountdown(30);
+        }
       } else {
         const { demo } = await msg91Service.sendPhoneOtp(forgotTarget.trim(), forgotCountry);
         toast.success(demo ? "OTP sent (Demo Mode - enter any 6 digits)." : "OTP sent to your phone. Enter it below to verify and sign in.");
@@ -349,15 +362,20 @@ export default function AuthApp() {
     }
   };
 
-  const handleForgotPhoneVerify = async (code) => {
+  const handleForgotVerify = async (code) => {
     if (!code.trim()) {
       setErrors({ forgotOtp: "Enter the OTP you received." });
       return;
     }
     setLoading(true);
     try {
-      const { demo } = await msg91Service.verifyPhoneOtp(forgotTarget.trim(), forgotCountry, code.trim());
-      toast.success(demo ? "Verified (Demo Mode). Signed in." : "Phone verified! Signed in.");
+      if (forgotMethod === "phone") {
+        const { demo } = await msg91Service.verifyPhoneOtp(forgotTarget.trim(), forgotCountry, code.trim());
+        toast.success(demo ? "Verified (Demo Mode). Signed in." : "Phone verified! Signed in.");
+      } else {
+        emailjsService.verifyTrackedOtpEmail(forgotTarget.trim(), code.trim());
+        toast.success("Email verified! Signed in.");
+      }
       goToDashboard();
     } catch (err) {
       toast.error(err.message || "That code isn't correct. Please try again.");
@@ -714,7 +732,7 @@ export default function AuthApp() {
                 </div>
 
                 <form onSubmit={handleForgot} noValidate className="space-y-4">
-                  {!(forgotMethod === "phone" && forgotOtpSent) && (
+                  {!forgotOtpSent && (
                     <div>
                       <label className="mb-1.5 block text-sm font-medium text-archinth-text">{forgotMethod === "email" ? "Email Address" : "Phone Number"}</label>
                       <div className="flex">
@@ -734,7 +752,7 @@ export default function AuthApp() {
                     </div>
                   )}
 
-                  {!(forgotMethod === "phone" && forgotOtpSent) ? (
+                  {!forgotOtpSent ? (
                     <button type="submit" className={btnPrimary} disabled={loading}>
                       {loading ? <Icon.Spinner className="h-4 w-4" /> : <Icon.Mail className="h-4 w-4" />}
                       {loading ? "Sending..." : "Send Reset Code / OTP"}
@@ -754,7 +772,7 @@ export default function AuthApp() {
                       </div>
                       <button
                         type="button"
-                        onClick={() => handleForgotPhoneVerify(forgotOtpCode.trim())}
+                        onClick={() => handleForgotVerify(forgotOtpCode.trim())}
                         className={btnPrimary}
                         disabled={loading || !forgotOtpCode.trim()}
                       >
