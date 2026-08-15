@@ -43,16 +43,36 @@ function generateOtp() {
   return String(Math.floor(100000 + Math.random() * 900000));
 }
 
+/**
+ * EmailJS rejects with a plain {status, text} object, not an Error
+ * instance - so `err.message` is normally undefined and callers
+ * silently fall back to a generic message, hiding the real reason
+ * (bad template ID, domain not allowed, missing template variable,
+ * etc). This normalizes it into a real Error with that reason
+ * attached, and logs the raw object so it's visible in devtools.
+ */
+function normalizeEmailjsError(err) {
+  console.error("[EmailJS] send failed:", err);
+  const status = err && err.status;
+  const text = (err && err.text) || (err && err.message) || "";
+  const reason = text ? `${text}${status ? ` (${status})` : ""}` : "Unknown EmailJS error - check the browser console for details.";
+  return new Error(`Couldn't send the email: ${reason}`);
+}
+
 /** Send a password reset email with a direct link. */
 export async function sendResetEmail(toEmail, resetLink) {
   if (emailjsReady) {
-    const res = await emailjs.send(
-      emailjsConfig.serviceId.value,
-      emailjsConfig.templateReset.value,
-      { to_email: toEmail, reset_link: resetLink },
-      emailjsConfig.publicKey.value
-    );
-    return { ...res, demo: false };
+    try {
+      const res = await emailjs.send(
+        emailjsConfig.serviceId.value,
+        emailjsConfig.templateReset.value,
+        { to_email: toEmail, reset_link: resetLink },
+        emailjsConfig.publicKey.value
+      );
+      return { ...res, demo: false };
+    } catch (err) {
+      throw normalizeEmailjsError(err);
+    }
   }
   await delay();
   console.log("[EmailJS][Demo] sendResetEmail", { toEmail, resetLink });
@@ -70,12 +90,16 @@ export async function sendAndTrackOtpEmail(toEmail) {
   const record = { otp, expiresAt: Date.now() + OTP_TTL_MS };
 
   if (emailjsReady) {
-    await emailjs.send(
-      emailjsConfig.serviceId.value,
-      emailjsConfig.templateOtp.value,
-      { to_email: toEmail, otp },
-      emailjsConfig.publicKey.value
-    );
+    try {
+      await emailjs.send(
+        emailjsConfig.serviceId.value,
+        emailjsConfig.templateOtp.value,
+        { to_email: toEmail, otp },
+        emailjsConfig.publicKey.value
+      );
+    } catch (err) {
+      throw normalizeEmailjsError(err);
+    }
     window.sessionStorage.setItem(storageKey(toEmail), JSON.stringify(record));
     return { demo: false };
   }
