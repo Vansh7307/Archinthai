@@ -3,11 +3,28 @@ export default {
   content: ["./index.html", "./src/**/*.{js,jsx}"],
   theme: {
     extend: {
+      colors: {
+        // Mirrors the :root custom properties in static/css/styles.css
+        // so the auth app matches the rest of the ArchinthAI site.
+        archinth: {
+          bg: "#f4f1e8",
+          bg2: "#e7efe1",
+          panel: "#fffcf6",
+          panel2: "#f7f5ee",
+          text: "#243127",
+          muted: "#607062",
+          border: "#5f7a59",
+          primary: "#6f9b6d",
+          secondary: "#a7be8f",
+          success: "#4f7c50",
+          danger: "#b8644d"
+        }
+      },
       fontFamily: {
         sans: ["Inter", "system-ui", "-apple-system", "Segoe UI", "sans-serif"]
       },
       boxShadow: {
-        card: "0 20px 60px -20px rgba(0,0,0,0.35)"
+        card: "0 24px 52px rgba(82, 104, 79, .12)"
       },
       keyframes: {
         "fade-up": {

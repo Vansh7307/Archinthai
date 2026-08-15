@@ -125,10 +125,10 @@ function useToasts() {
           key={t.id}
           className={`pointer-events-auto flex items-start gap-3 rounded-xl border px-4 py-3 text-sm font-medium text-white shadow-lg backdrop-blur ${
             t.type === "success"
-              ? "border-emerald-400/30 bg-emerald-600"
+              ? "border-archinth-success/30 bg-archinth-success"
               : t.type === "error"
-              ? "border-rose-400/30 bg-rose-600"
-              : "border-sky-400/30 bg-sky-600"
+              ? "border-archinth-danger/30 bg-archinth-danger"
+              : "border-archinth-secondary/40 bg-archinth-secondary"
           }`}
         >
           {t.type === "success" ? (
@@ -149,10 +149,10 @@ function useToasts() {
 
 /* ---------------- Small shared UI helpers ---------------- */
 const inputCls =
-  "w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 placeholder-slate-400 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20";
+  "w-full rounded-xl border border-stone-200 bg-white px-3.5 py-2.5 text-sm text-archinth-text placeholder-archinth-muted outline-none transition focus:border-archinth-primary focus:ring-2 focus:ring-archinth-primary/20";
 
 const btnPrimary =
-  "inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-indigo-600/25 transition hover:from-indigo-700 hover:to-violet-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 disabled:opacity-60 disabled:cursor-not-allowed";
+  "inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-archinth-primary to-archinth-secondary px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-archinth-primary/25 transition hover:from-archinth-primary hover:to-archinth-secondary hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-archinth-primary/40 disabled:opacity-60 disabled:cursor-not-allowed";
 
 const countryCodes = ["+91", "+1", "+44", "+61", "+971", "+65", "+81", "+49", "+33"];
 
@@ -329,16 +329,16 @@ export default function AuthApp() {
   /* ---------------- Render helpers ---------------- */
   const renderField = (key, label, type, value, onChange, placeholder, autoComplete) => (
     <div>
-      <label className="mb-1.5 block text-sm font-medium text-slate-700">{label}</label>
+      <label className="mb-1.5 block text-sm font-medium text-archinth-text">{label}</label>
       <input
         type={type}
         value={value}
         onChange={onChange}
         placeholder={placeholder}
         autoComplete={autoComplete}
-        className={`${inputCls} ${errors[key] ? "border-rose-400 focus:border-rose-500 focus:ring-rose-500/20" : ""}`}
+        className={`${inputCls} ${errors[key] ? "border-archinth-danger focus:border-archinth-danger focus:ring-archinth-danger/20" : ""}`}
       />
-      {errors[key] && <p className="mt-1.5 text-xs font-medium text-rose-500">{errors[key]}</p>}
+      {errors[key] && <p className="mt-1.5 text-xs font-medium text-archinth-danger">{errors[key]}</p>}
     </div>
   );
 
@@ -351,10 +351,10 @@ export default function AuthApp() {
         setOtpSent(false);
         setOtpCode("");
       }}
-      className={`flex-1 rounded-lg border px-3 py-2 text-xs font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 ${
+      className={`flex-1 rounded-lg border px-3 py-2 text-xs font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-archinth-primary/40 ${
         authMethod === value
-          ? "border-indigo-500 bg-indigo-50 text-indigo-700"
-          : "border-slate-200 text-slate-500 hover:border-slate-300 hover:bg-slate-50"
+          ? "border-archinth-primary bg-archinth-primary/10 text-archinth-primary"
+          : "border-stone-200 text-archinth-muted hover:border-stone-300 hover:bg-stone-50"
       }`}
     >
       <span className="inline-flex items-center justify-center gap-1.5">{icon}{label}</span>
@@ -371,8 +371,8 @@ export default function AuthApp() {
       }}
       className={`flex-1 rounded-xl border px-3 py-3 text-sm font-semibold transition ${
         forgotMethod === value
-          ? "border-indigo-500 bg-indigo-50 text-indigo-700"
-          : "border-slate-200 text-slate-500 hover:border-slate-300 hover:bg-slate-50"
+          ? "border-archinth-primary bg-archinth-primary/10 text-archinth-primary"
+          : "border-stone-200 text-archinth-muted hover:border-stone-300 hover:bg-stone-50"
       }`}
     >
       <span className="inline-flex items-center justify-center gap-2">
@@ -387,23 +387,23 @@ export default function AuthApp() {
       {ToastRegion}
 
       {/* Background */}
-      <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 px-4 py-12">
-        <div className="pointer-events-none absolute -left-24 -top-24 h-72 w-72 rounded-full bg-indigo-600/30 blur-3xl" aria-hidden="true" />
-        <div className="pointer-events-none absolute -bottom-24 -right-24 h-72 w-72 rounded-full bg-violet-600/30 blur-3xl" aria-hidden="true" />
+      <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-gradient-to-br from-archinth-bg via-archinth-bg2 to-archinth-bg px-4 py-12">
+        <div className="pointer-events-none absolute -left-24 -top-24 h-72 w-72 rounded-full bg-archinth-secondary/30 blur-3xl" aria-hidden="true" />
+        <div className="pointer-events-none absolute -bottom-24 -right-24 h-72 w-72 rounded-full bg-archinth-primary/25 blur-3xl" aria-hidden="true" />
 
         <div className="relative w-full max-w-md">
-          <div className="overflow-hidden rounded-3xl bg-white shadow-2xl">
+          <div className="overflow-hidden rounded-3xl border border-archinth-border/15 bg-archinth-panel shadow-card">
             {/* Header */}
-            <div className="flex flex-col items-center gap-2 border-b border-slate-100 px-6 pb-5 pt-7">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-600 to-violet-600 shadow-lg shadow-indigo-600/25">
+            <div className="flex flex-col items-center gap-2 border-b border-archinth-border/15 px-6 pb-5 pt-7">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-archinth-primary to-archinth-secondary shadow-lg shadow-archinth-primary/25">
                 <Icon.Shield className="h-6 w-6 text-white" />
               </div>
-              <h1 className="text-xl font-extrabold tracking-tight text-slate-900">ArchinthAI</h1>
-              <p className="text-sm text-slate-500">Sign in to continue to the studio</p>
+              <h1 className="text-xl font-extrabold tracking-tight text-archinth-text">ArchinthAI</h1>
+              <p className="text-sm text-archinth-muted">Sign in to continue to the studio</p>
             </div>
 
             {/* Demo notice */}
-            <div className="flex items-center gap-2 bg-amber-50 px-4 py-2.5 text-xs font-medium text-amber-700">
+            <div className="flex items-center gap-2 bg-archinth-secondary/15 px-4 py-2.5 text-xs font-medium text-archinth-success">
               <Icon.Alert className="h-4 w-4 shrink-0" />
               Demo Mode — authentication is simulated and works out of the box.
             </div>
@@ -411,16 +411,16 @@ export default function AuthApp() {
             {view === "auth" ? (
               <>
                 {/* Tabs */}
-                <div className="flex border-b border-slate-100 px-6">
+                <div className="flex border-b border-archinth-border/15 px-6">
                   {["login", "signup"].map((t) => (
                     <button
                       key={t}
                       onClick={() => { setTab(t); setErrors({}); }}
-                      className="relative flex-1 py-3 text-sm font-semibold text-slate-500 transition hover:text-slate-800"
+                      className="relative flex-1 py-3 text-sm font-semibold text-archinth-muted transition hover:text-archinth-text"
                     >
                       {t === "login" ? "Login" : "Sign Up"}
                       <span
-                        className={`absolute inset-x-0 bottom-0 mx-auto h-0.5 rounded-full bg-indigo-600 transition-all duration-300 ${
+                        className={`absolute inset-x-0 bottom-0 mx-auto h-0.5 rounded-full bg-archinth-primary transition-all duration-300 ${
                           tab === t ? "w-10 opacity-100" : "w-0 opacity-0"
                         }`}
                       />
@@ -433,7 +433,7 @@ export default function AuthApp() {
                     /* ============ LOGIN ============ */
                     <div>
                       {/* Password / OTP toggle */}
-                      <div className="mb-5 flex gap-2 rounded-xl bg-slate-100 p-1">
+                      <div className="mb-5 flex gap-2 rounded-xl bg-stone-100 p-1">
                         {methodBtn("password", "Password", <Icon.Lock className="h-3.5 w-3.5" />)}
                         {methodBtn("otp", "OTP Login", <Icon.Phone className="h-3.5 w-3.5" />)}
                       </div>
@@ -443,7 +443,7 @@ export default function AuthApp() {
                           {renderField("identifier", "Username or Email Address", "text", login.identifier, (e) => setLogin({ ...login, identifier: e.target.value }), "you@example.com", "username")}
 
                           <div>
-                            <label className="mb-1.5 block text-sm font-medium text-slate-700">Password</label>
+                            <label className="mb-1.5 block text-sm font-medium text-archinth-text">Password</label>
                             <div className="relative">
                               <input
                                 type={login.showPassword ? "text" : "password"}
@@ -451,22 +451,22 @@ export default function AuthApp() {
                                 onChange={(e) => setLogin({ ...login, password: e.target.value })}
                                 placeholder="••••••••"
                                 autoComplete="current-password"
-                                className={`${inputCls} pr-10 ${errors.password ? "border-rose-400" : ""}`}
+                                className={`${inputCls} pr-10 ${errors.password ? "border-archinth-danger" : ""}`}
                               />
                               <button
                                 type="button"
                                 onClick={() => setLogin({ ...login, showPassword: !login.showPassword })}
-                                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 transition hover:text-slate-600"
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-archinth-muted transition hover:text-archinth-muted"
                                 aria-label="Toggle password visibility"
                               >
                                 {login.showPassword ? <Icon.EyeOff className="h-4 w-4" /> : <Icon.Eye className="h-4 w-4" />}
                               </button>
                             </div>
-                            {errors.password && <p className="mt-1.5 text-xs font-medium text-rose-500">{errors.password}</p>}
+                            {errors.password && <p className="mt-1.5 text-xs font-medium text-archinth-danger">{errors.password}</p>}
                           </div>
 
                           <div className="flex justify-end">
-                            <button type="button" onClick={() => setView("forgot")} className="rounded text-xs font-semibold text-indigo-600 hover:text-indigo-700 hover:underline">
+                            <button type="button" onClick={() => setView("forgot")} className="rounded text-xs font-semibold text-archinth-primary hover:text-archinth-primary hover:underline">
                               Forgot Password?
                             </button>
                           </div>
@@ -479,23 +479,23 @@ export default function AuthApp() {
                       ) : (
                         <form onSubmit={handleVerifyOTP} noValidate className="space-y-4">
                           {/* OTP channel */}
-                          <div className="flex gap-2 rounded-xl bg-slate-100 p-1">
+                          <div className="flex gap-2 rounded-xl bg-stone-100 p-1">
                             {[
                               { v: "email", label: "via Email", icon: <Icon.Mail className="h-3.5 w-3.5" /> },
                               { v: "phone", label: "via Phone", icon: <Icon.Phone className="h-3.5 w-3.5" /> }
                             ].map((o) => (
                               <button key={o.v} type="button" onClick={() => { setOtpMode(o.v); setOtpSent(false); setOtpCode(""); }}
-                                className={`flex-1 rounded-lg border px-3 py-2 text-xs font-semibold transition ${otpMode === o.v ? "border-indigo-500 bg-indigo-50 text-indigo-700" : "border-slate-200 text-slate-500 hover:bg-slate-50"}`}>
+                                className={`flex-1 rounded-lg border px-3 py-2 text-xs font-semibold transition ${otpMode === o.v ? "border-archinth-primary bg-archinth-primary/10 text-archinth-primary" : "border-stone-200 text-archinth-muted hover:bg-stone-50"}`}>
                                 <span className="inline-flex items-center justify-center gap-1.5">{o.icon}{o.label}</span>
                               </button>
                             ))}
                           </div>
 
                           <div>
-                            <label className="mb-1.5 block text-sm font-medium text-slate-700">{otpMode === "email" ? "Email Address" : "Phone Number"}</label>
+                            <label className="mb-1.5 block text-sm font-medium text-archinth-text">{otpMode === "email" ? "Email Address" : "Phone Number"}</label>
                             <div className="flex">
                               {otpMode === "phone" && (
-                                <select value={signup.countryCode} onChange={(e) => setSignup({ ...signup, countryCode: e.target.value })} className="rounded-l-xl border border-slate-200 bg-white px-3 text-sm text-slate-700 focus:outline-none">
+                                <select value={signup.countryCode} onChange={(e) => setSignup({ ...signup, countryCode: e.target.value })} className="rounded-l-xl border border-stone-200 bg-white px-3 text-sm text-archinth-text focus:outline-none">
                                   {countryCodes.map((c) => <option key={c}>{c}</option>)}
                                 </select>
                               )}
@@ -517,7 +517,7 @@ export default function AuthApp() {
                           ) : (
                             <>
                               <div>
-                                <label className="mb-1.5 block text-sm font-medium text-slate-700">Enter OTP</label>
+                                <label className="mb-1.5 block text-sm font-medium text-archinth-text">Enter OTP</label>
                                 <input
                                   type="text"
                                   inputMode="numeric"
@@ -531,11 +531,11 @@ export default function AuthApp() {
                                 {loading ? <Icon.Spinner className="h-4 w-4" /> : <Icon.Check className="h-4 w-4" />}
                                 {loading ? "Verifying..." : "Verify & Sign In"}
                               </button>
-                              <div className="flex items-center justify-center gap-2 text-xs font-medium text-slate-500">
+                              <div className="flex items-center justify-center gap-2 text-xs font-medium text-archinth-muted">
                                 {countdown > 0 ? (
-                                  <span className="inline-flex items-center gap-1"><Icon.Timer className="h-4 w-4 text-indigo-500" />Resend in {countdown}s</span>
+                                  <span className="inline-flex items-center gap-1"><Icon.Timer className="h-4 w-4 text-archinth-primary" />Resend in {countdown}s</span>
                                 ) : (
-                                  <button type="button" onClick={handleSendOTP} className="font-semibold text-indigo-600 hover:underline">Resend OTP</button>
+                                  <button type="button" onClick={handleSendOTP} className="font-semibold text-archinth-primary hover:underline">Resend OTP</button>
                                 )}
                               </div>
                             </>
@@ -546,16 +546,16 @@ export default function AuthApp() {
                       {/* Social login */}
                       <div className="mt-6">
                         <div className="relative my-4">
-                          <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-slate-200" /></div>
-                          <div className="relative flex justify-center text-xs"><span className="bg-white px-3 text-slate-400">OR</span></div>
+                          <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-stone-200" /></div>
+                          <div className="relative flex justify-center text-xs"><span className="bg-white px-3 text-archinth-muted">OR</span></div>
                         </div>
                         <div className="grid grid-cols-2 gap-3">
                           <button type="button" onClick={() => handleProvider("google")} disabled={!!provider}
-                            className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 px-3 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-60">
+                            className="inline-flex items-center justify-center gap-2 rounded-xl border border-stone-200 px-3 py-2.5 text-sm font-semibold text-archinth-text transition hover:bg-stone-50 disabled:opacity-60">
                             {provider === "google" ? <Icon.Spinner className="h-4 w-4" /> : <Icon.Google />} Google
                           </button>
                           <button type="button" onClick={() => handleProvider("microsoft")} disabled={!!provider}
-                            className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 px-3 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-60">
+                            className="inline-flex items-center justify-center gap-2 rounded-xl border border-stone-200 px-3 py-2.5 text-sm font-semibold text-archinth-text transition hover:bg-stone-50 disabled:opacity-60">
                             {provider === "microsoft" ? <Icon.Spinner className="h-4 w-4" /> : <Icon.Microsoft />} Microsoft
                           </button>
                         </div>
@@ -572,9 +572,9 @@ export default function AuthApp() {
                       {renderField("email", "Email Address", "email", signup.email, (e) => setSignup({ ...signup, email: e.target.value }), "you@example.com", "email")}
 
                       <div>
-                        <label className="mb-1.5 block text-sm font-medium text-slate-700">Phone Number</label>
+                        <label className="mb-1.5 block text-sm font-medium text-archinth-text">Phone Number</label>
                         <div className="flex">
-                          <select value={signup.countryCode} onChange={(e) => setSignup({ ...signup, countryCode: e.target.value })} className="rounded-l-xl border border-slate-200 bg-white px-2 text-sm text-slate-700 focus:outline-none">
+                          <select value={signup.countryCode} onChange={(e) => setSignup({ ...signup, countryCode: e.target.value })} className="rounded-l-xl border border-stone-200 bg-white px-2 text-sm text-archinth-text focus:outline-none">
                             {countryCodes.map((c) => <option key={c}>{c}</option>)}
                           </select>
                           <input
@@ -583,15 +583,15 @@ export default function AuthApp() {
                             onChange={(e) => setSignup({ ...signup, phone: e.target.value })}
                             placeholder="9876543210"
                             autoComplete="tel"
-                            className={`${inputCls} rounded-l-none ${errors.phone ? "border-rose-400" : ""}`}
+                            className={`${inputCls} rounded-l-none ${errors.phone ? "border-archinth-danger" : ""}`}
                           />
                         </div>
-                        {errors.phone && <p className="mt-1.5 text-xs font-medium text-rose-500">{errors.phone}</p>}
+                        {errors.phone && <p className="mt-1.5 text-xs font-medium text-archinth-danger">{errors.phone}</p>}
                       </div>
 
                       <div className="grid gap-4 sm:grid-cols-2">
                         <div>
-                          <label className="mb-1.5 block text-sm font-medium text-slate-700">Password</label>
+                          <label className="mb-1.5 block text-sm font-medium text-archinth-text">Password</label>
                           <div className="relative">
                             <input
                               type={signup.showPassword ? "text" : "password"}
@@ -599,25 +599,25 @@ export default function AuthApp() {
                               onChange={(e) => setSignup({ ...signup, password: e.target.value })}
                               placeholder="••••••••"
                               autoComplete="new-password"
-                              className={`${inputCls} pr-10 ${errors.password ? "border-rose-400" : ""}`}
+                              className={`${inputCls} pr-10 ${errors.password ? "border-archinth-danger" : ""}`}
                             />
-                            <button type="button" onClick={() => setSignup({ ...signup, showPassword: !signup.showPassword })} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400" aria-label="Toggle password visibility">
+                            <button type="button" onClick={() => setSignup({ ...signup, showPassword: !signup.showPassword })} className="absolute right-3 top-1/2 -translate-y-1/2 text-archinth-muted" aria-label="Toggle password visibility">
                               {signup.showPassword ? <Icon.EyeOff className="h-4 w-4" /> : <Icon.Eye className="h-4 w-4" />}
                             </button>
                           </div>
-                          {errors.password && <p className="mt-1.5 text-xs font-medium text-rose-500">{errors.password}</p>}
+                          {errors.password && <p className="mt-1.5 text-xs font-medium text-archinth-danger">{errors.password}</p>}
                         </div>
                         <div>
-                          <label className="mb-1.5 block text-sm font-medium text-slate-700">Confirm Password</label>
+                          <label className="mb-1.5 block text-sm font-medium text-archinth-text">Confirm Password</label>
                           <input
                             type="password"
                             value={signup.confirmPassword}
                             onChange={(e) => setSignup({ ...signup, confirmPassword: e.target.value })}
                             placeholder="••••••••"
                             autoComplete="new-password"
-                            className={`${inputCls} ${errors.confirmPassword ? "border-rose-400" : ""}`}
+                            className={`${inputCls} ${errors.confirmPassword ? "border-archinth-danger" : ""}`}
                           />
-                          {errors.confirmPassword && <p className="mt-1.5 text-xs font-medium text-rose-500">{errors.confirmPassword}</p>}
+                          {errors.confirmPassword && <p className="mt-1.5 text-xs font-medium text-archinth-danger">{errors.confirmPassword}</p>}
                         </div>
                       </div>
 
@@ -633,8 +633,8 @@ export default function AuthApp() {
               /* ============ FORGOT PASSWORD ============ */
               <div className="px-6 py-6">
                 <div className="mb-5 text-center">
-                  <h2 className="text-xl font-bold text-slate-900">Forgot Password?</h2>
-                  <p className="mt-1 text-sm text-slate-500">Choose how you'd like to receive your reset code.</p>
+                  <h2 className="text-xl font-bold text-archinth-text">Forgot Password?</h2>
+                  <p className="mt-1 text-sm text-archinth-muted">Choose how you'd like to receive your reset code.</p>
                 </div>
 
                 <div className="mb-5 flex gap-2">
@@ -644,10 +644,10 @@ export default function AuthApp() {
 
                 <form onSubmit={handleForgot} noValidate className="space-y-4">
                   <div>
-                    <label className="mb-1.5 block text-sm font-medium text-slate-700">{forgotMethod === "email" ? "Email Address" : "Phone Number"}</label>
+                    <label className="mb-1.5 block text-sm font-medium text-archinth-text">{forgotMethod === "email" ? "Email Address" : "Phone Number"}</label>
                     <div className="flex">
                       {forgotMethod === "phone" && (
-                        <select value={forgotCountry} onChange={(e) => setForgotCountry(e.target.value)} className="rounded-l-xl border border-slate-200 bg-white px-2 text-sm text-slate-700 focus:outline-none">
+                        <select value={forgotCountry} onChange={(e) => setForgotCountry(e.target.value)} className="rounded-l-xl border border-stone-200 bg-white px-2 text-sm text-archinth-text focus:outline-none">
                           {countryCodes.map((c) => <option key={c}>{c}</option>)}
                         </select>
                       )}
@@ -667,14 +667,14 @@ export default function AuthApp() {
                   </button>
 
                   {countdown > 0 && (
-                    <div className="flex animate-pulse items-center justify-center gap-2 rounded-xl bg-slate-50 px-3 py-2.5 text-sm font-medium text-slate-600">
-                      <Icon.Timer className="h-4 w-4 text-indigo-500" />
+                    <div className="flex animate-pulse items-center justify-center gap-2 rounded-xl bg-stone-50 px-3 py-2.5 text-sm font-medium text-archinth-muted">
+                      <Icon.Timer className="h-4 w-4 text-archinth-primary" />
                       Resend available in {countdown}s
                     </div>
                   )}
                 </form>
 
-                <button type="button" onClick={() => setView("auth")} className="mt-5 inline-flex w-full items-center justify-center gap-1.5 rounded-xl px-3 py-2 text-sm font-semibold text-slate-500 hover:text-slate-700">
+                <button type="button" onClick={() => setView("auth")} className="mt-5 inline-flex w-full items-center justify-center gap-1.5 rounded-xl px-3 py-2 text-sm font-semibold text-archinth-muted hover:text-archinth-text">
                   <Icon.Arrow className="h-4 w-4" />
                   Back to Login
                 </button>

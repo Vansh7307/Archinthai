@@ -17,29 +17,29 @@
 
 @layer components {
   .auth-input {
-    @apply w-full rounded-xl border border-slate-300/80 bg-white px-4 py-3 text-sm text-slate-800 transition
-           placeholder:text-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-4 focus:ring-indigo-500/15;
+    @apply w-full rounded-xl border border-archinth-border/20 bg-white px-4 py-3 text-sm text-archinth-text transition
+           placeholder:text-archinth-muted focus:border-archinth-primary focus:outline-none focus:ring-4 focus:ring-archinth-primary/15;
   }
   .auth-input-error {
-    @apply border-rose-400 focus:border-rose-500 focus:ring-rose-500/15;
+    @apply border-archinth-danger focus:border-archinth-danger focus:ring-archinth-danger/15;
   }
   .auth-btn-primary {
-    @apply inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600
-           px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-indigo-600/25 transition
-           hover:from-indigo-500 hover:to-violet-500 hover:shadow-indigo-600/40
-           focus:outline-none focus:ring-4 focus:ring-indigo-500/30 disabled:cursor-not-allowed disabled:opacity-60;
+    @apply inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-archinth-primary to-archinth-secondary
+           px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-archinth-primary/25 transition
+           hover:opacity-90 hover:shadow-archinth-primary/40
+           focus:outline-none focus:ring-4 focus:ring-archinth-primary/30 disabled:cursor-not-allowed disabled:opacity-60;
   }
   .auth-btn-social {
-    @apply inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-3 py-2.5
-           text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-slate-50
-           focus:outline-none focus:ring-4 focus:ring-slate-200 disabled:cursor-not-allowed disabled:opacity-60;
+    @apply inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-archinth-border/20 bg-white px-3 py-2.5
+           text-sm font-medium text-archinth-text transition hover:border-archinth-border/40 hover:bg-archinth-bg
+           focus:outline-none focus:ring-4 focus:ring-archinth-border/20 disabled:cursor-not-allowed disabled:opacity-60;
   }
   .auth-tab {
-    @apply relative flex-1 py-3 text-sm font-semibold text-slate-500 transition
-           focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40;
+    @apply relative flex-1 py-3 text-sm font-semibold text-archinth-muted transition
+           focus:outline-none focus-visible:ring-2 focus-visible:ring-archinth-primary/40;
   }
   .auth-select {
-    @apply h-full rounded-l-xl border border-r-0 border-slate-300/80 bg-slate-50 px-2 text-sm font-medium text-slate-700
-           focus:outline-none focus:ring-2 focus:ring-indigo-500/30;
+    @apply h-full rounded-l-xl border border-r-0 border-archinth-border/20 bg-archinth-bg px-2 text-sm font-medium text-archinth-text
+           focus:outline-none focus:ring-2 focus:ring-archinth-primary/30;
   }
 }
